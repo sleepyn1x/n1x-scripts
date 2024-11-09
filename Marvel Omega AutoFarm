@@ -1,0 +1,72 @@
+local targetPartName = "Pumpkin"
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local userInputService = game:GetService("UserInputService")
+
+local isActivatingPrompt = false  
+local isScriptEnabled = false  
+
+
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+local statusLabel = Instance.new("TextLabel", screenGui)
+statusLabel.Size = UDim2.new(0, 200, 0, 50)
+statusLabel.Position = UDim2.new(0.5, -100, 0, 50)
+statusLabel.TextSize = 24
+statusLabel.TextColor3 = Color3.new(1, 1, 1)
+statusLabel.BackgroundTransparency = 0.5
+statusLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+statusLabel.Text = "Press P to enable"
+
+
+local function updateStatusLabel()
+    if isScriptEnabled then
+        statusLabel.Text = "Enabled"
+        statusLabel.TextColor3 = Color3.new(0, 1, 0)  
+    else
+        statusLabel.Text = "Press P to enable"
+        statusLabel.TextColor3 = Color3.new(1, 0, 0)
+    end
+end
+
+
+local function teleportAndActivatePrompt(targetPart)
+    humanoidRootPart.CFrame = targetPart.CFrame
+
+    local proximityPrompt = targetPart:FindFirstChildOfClass("ProximityPrompt")
+
+
+    if proximityPrompt and proximityPrompt.Enabled and not isActivatingPrompt then
+        isActivatingPrompt = true  -- Устанавливаем флаг активации
+
+
+        proximityPrompt:InputHoldBegin()
+        wait(proximityPrompt.HoldDuration)
+        proximityPrompt:InputHoldEnd() 
+
+    
+        isActivatingPrompt = false
+    end
+end
+
+
+userInputService.InputBegan:Connect(function(input, isProcessed)
+    if not isProcessed and input.KeyCode == Enum.KeyCode.P then
+        isScriptEnabled = not isScriptEnabled  
+        updateStatusLabel()  
+    end
+end)
+
+
+while true do
+    if isScriptEnabled then
+        local targetPart = workspace:FindFirstChild(targetPartName)
+        
+        if targetPart then
+            teleportAndActivatePrompt(targetPart)
+        end
+    end
+    
+    wait(1) 
+end
