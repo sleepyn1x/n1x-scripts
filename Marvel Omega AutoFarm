@@ -4,76 +4,99 @@ if not Rayfield then
 end
 
 local Window = Rayfield:CreateWindow({
-    Name = "n1x Marvel Omega",
-    Icon = 0,
+    Name = "sleepyn1x Marvel Omega",
+    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
     LoadingTitle = "Marvel Omega Autofarm",
     LoadingSubtitle = "by sleepyn1x",
-    Theme = "Default",
+    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
     DisableRayfieldPrompts = false,
-    DisableBuildWarnings = false,
+    DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
     ConfigurationSaving = {
        Enabled = true,
+       FolderName = nil, -- Create a custom folder for your hub/game
        FileName = "Big Hub"
     },
+
     Discord = {
-       Enabled = false,
-       Invite = "noinvitelink",
-       RememberJoins = true
+       Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+       Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
     },
-    KeySystem = false,
+
+    KeySystem = false, -- Set this to true to use our key system
     KeySettings = {
        Title = "Untitled",
        Subtitle = "Key System",
-       Note = "No method of obtaining the key is provided",
-       FileName = "Key",
-       SaveKey = true,
-       GrabKeyFromSite = false,
-       Key = {"Hello"}
+       Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+       SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+       Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
     }
 })
 
-local PlayerTab = Window:CreateTab("Player", 4483362458)
+local PlayerTab = Window:CreateTab("Player", 4483362458) -- Title, Image
 
+-- Toggle element to start/stop the autofarm
 local Toggle = PlayerTab:CreateToggle({
    Name = "AutoFarm",
-   CurrentValue = false,
-   Flag = "FarmToggle",
+   CurrentValue = false,  -- Initially set the toggle to false (not active)
+   Flag = "FarmToggle",  -- Flag used for saving the toggle state
    Callback = function(Value)
-      local targetPartName = "Chest"
+      -- The function that takes place when the toggle is pressed
+      -- Value will be true or false depending on the toggle's state
+      local targetPartName = "Chest"  -- Target part to interact with
+
       local player = game.Players.LocalPlayer
       local character = player.Character or player.CharacterAdded:Wait()
       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+      
       local isActivatingPrompt = false  
-
+      
+      -- Function to teleport and activate ProximityPrompt
       local function teleportAndActivatePrompt(targetPart)
-         local targetBodyPart = targetPart:FindFirstChild("Body")
+         -- Moving player to the target part's Body (adjust if needed)
+         local targetBodyPart = targetPart:FindFirstChild("Body")  -- Update this if the part name is different
+         
          if targetBodyPart then
             humanoidRootPart.CFrame = targetBodyPart.CFrame
+            
+            -- Find the ProximityPrompt in the Body part
             local proximityPrompt = targetBodyPart:FindFirstChildOfClass("ProximityPrompt")
+    
             if proximityPrompt and proximityPrompt.Enabled and not isActivatingPrompt then
-                isActivatingPrompt = true
+                isActivatingPrompt = true  -- Flag to prevent multiple activations
+
+                -- Simulate pressing the ProximityPrompt button
                 fireproximityprompt(proximityPrompt)
+    
                 isActivatingPrompt = false
             end
          else
             warn("Body part not found in " .. targetPart.Name)
          end
       end
-
+      
+      -- Instead of using a while loop, we use task.spawn for non-blocking execution
       task.spawn(function()
-         while Value do
+         while Value do  -- If the toggle is ON
             local targetPart = workspace:FindFirstChild(targetPartName)
+         
             if targetPart then
                teleportAndActivatePrompt(targetPart)
             else
                warn("Target part not found!")
             end
-            wait(1)
+         
+            wait(1) -- Wait 1 second before the next iteration
          end
       end)
    end,
 })
 
+-- Slider for WalkSpeed
 local WalkSpeedSlider = PlayerTab:CreateSlider({
     Name = "WalkSpeed",
     Range = {10, 100},
@@ -82,11 +105,13 @@ local WalkSpeedSlider = PlayerTab:CreateSlider({
     CurrentValue = 10,
     Flag = "Slider1",
     Callback = function(Value)
+        -- Ожидаем, пока Humanoid будет доступен
         local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
         humanoid.WalkSpeed = Value
     end,
 })
 
+-- Slider for JumpPower
 local JumpPowerSlider = PlayerTab:CreateSlider({
     Name = "JumpPower",
     Range = {10, 500},
@@ -100,14 +125,17 @@ local JumpPowerSlider = PlayerTab:CreateSlider({
     end,
 })
 
+-- Button to teleport to PowerStone
 local Button = PlayerTab:CreateButton({
     Name = "Teleport to POWERSTONE",
     Callback = function()
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
         local targetPartName = "PowerStone"
         local targetPart = workspace:FindFirstChild(targetPartName)
+        
         if targetPart then
             humanoidRootPart.CFrame = targetPart.CFrame
         else
@@ -116,64 +144,90 @@ local Button = PlayerTab:CreateButton({
     end,
 })
 
+
+
 local ToggleChests = PlayerTab:CreateToggle({
     Name = "Show Chest Lines & Boxes",
-    CurrentValue = false,
+    CurrentValue = false,  
     Flag = "ChestLineBoxToggle",
     Callback = function(Value)
        local chestLine = nil
        local chestBox = nil
        local chestRunning = false
+ 
 
        local function createLineAndBoxToChest(chestPart)
+
           if chestLine then
              chestLine:Destroy()
           end
           if chestBox then
              chestBox:Destroy()
           end
+ 
+          -- Создаем линию
           chestLine = Instance.new("Beam")
           chestLine.Parent = game.Workspace
           local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
           local attachment2 = Instance.new("Attachment", chestPart)
-          attachment1.Position = Vector3.new(0, 1, 0)
-          attachment2.Position = Vector3.new(0, 1, 0)
+          attachment1.Position = Vector3.new(0, 1, 0) 
+          attachment2.Position = Vector3.new(0, 1, 0)  
           chestLine.Attachment0 = attachment1
           chestLine.Attachment1 = attachment2
-          chestLine.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180))
+          chestLine.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180))  
           chestLine.Width0 = 0.2
           chestLine.Width1 = 0.2
+ 
+          -- Создаем бокс вокруг Chest, делаем просвечивающим
           chestBox = Instance.new("BoxHandleAdornment")
           chestBox.Parent = chestPart
-          chestBox.Size = chestPart.Size + Vector3.new(0.5, 0.5, 0.5)
+          chestBox.Size = chestPart.Size + Vector3.new(0.5, 0.5, 0.5)  
           chestBox.Adornee = chestPart
-          chestBox.Color3 = Color3.fromRGB(255, 105, 180)
-          chestBox.Transparency = 0.5
-          chestBox.ZIndex = 5
-          chestBox.AlwaysOnTop = true
+          chestBox.Color3 = Color3.fromRGB(255, 105, 180)  
+          chestBox.Transparency = 0.5 
+          chestBox.ZIndex = 5  
+          chestBox.AlwaysOnTop = true  
        end
+ 
 
        task.spawn(function()
           while true do
-             if Value then
+             if Value then 
                 if not chestRunning then
                    chestRunning = true
+                   local targetPart = nil
+
                    for _, part in pairs(workspace:GetChildren()) do
                       if part.Name == "Chest" and part:FindFirstChild("Body") then
-                         createLineAndBoxToChest(part.Body)
+                         targetPart = part.Body
+                         break  
                       end
                    end
-                   workspace.ChildAdded:Connect(function(child)
-                      if child.Name == "Chest" and child:FindFirstChild("Body") then
-                         createLineAndBoxToChest(child.Body)
-                      end
-                   end)
+ 
+                   if targetPart then
+                      createLineAndBoxToChest(targetPart)  
+                   end
+ 
                    while Value do
-                      wait(1)
+                      if targetPart and targetPart.Parent then
+                         wait(1)  
+                      else
+
+                         if chestLine then
+                            chestLine:Destroy()
+                            chestLine = nil
+                         end
+                         if chestBox then
+                            chestBox:Destroy()
+                            chestBox = nil
+                         end
+                         break
+                      end
                    end
                    chestRunning = false
                 end
              else
+
                 if chestLine then
                    chestLine:Destroy()
                    chestLine = nil
@@ -182,25 +236,29 @@ local ToggleChests = PlayerTab:CreateToggle({
                    chestBox:Destroy()
                    chestBox = nil
                 end
-                break
+                break  
              end
-             wait(1)
+             wait(1)  
           end
        end)
     end,
-})
+ })
+ 
 
-local TogglePlayers = PlayerTab:CreateToggle({
+ local TogglePlayers = PlayerTab:CreateToggle({
     Name = "Show Player Lines & Names",
-    CurrentValue = false,
+    CurrentValue = false,  
     Flag = "PlayerLineToggle",
     Callback = function(Value)
        local playerLines = {}
        local playerRunning = false
+ 
 
        local function createLineAndNameToPlayer(targetPlayer)
           local character = targetPlayer.Character
           if not character then return end
+ 
+
           local targetPart = character:WaitForChild("HumanoidRootPart")
           local line = Instance.new("Beam")
           line.Parent = game.Workspace
@@ -210,29 +268,35 @@ local TogglePlayers = PlayerTab:CreateToggle({
           attachment2.Position = Vector3.new(0, 1, 0)
           line.Attachment0 = attachment1
           line.Attachment1 = attachment2
-          line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))
+          line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))  -- Оранжевая линия
           line.Width0 = 0.2
           line.Width1 = 0.2
+ 
+          -- Создаем BillboardGui для отображения никнейма с прозрачным фоном
           local billboard = Instance.new("BillboardGui")
           billboard.Parent = targetPart
           billboard.Adornee = targetPart
           billboard.Size = UDim2.new(0, 100, 0, 50)
           billboard.StudsOffset = Vector3.new(0, 3, 0)
-          billboard.AlwaysOnTop = true
+          billboard.AlwaysOnTop = true  -- Ник всегда виден сквозь стены
+ 
           local textLabel = Instance.new("TextLabel")
           textLabel.Parent = billboard
           textLabel.Size = UDim2.new(1, 0, 1, 0)
           textLabel.Text = targetPlayer.Name
-          textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)
+          textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)  -- Оранжевый цвет
           textLabel.TextStrokeTransparency = 0.5
           textLabel.TextSize = 16
-          textLabel.BackgroundTransparency = 1
+          textLabel.BackgroundTransparency = 1  -- Прозрачный фон
+ 
+          -- Сохраняем линию и BillboardGui
           table.insert(playerLines, {line, billboard})
        end
-
+ 
+       -- Асинхронное обновление
        task.spawn(function()
           while true do
-             if Value then
+             if Value then  -- Если тумблер включен
                 if not playerRunning then
                    playerRunning = true
                    for _, targetPlayer in pairs(game.Players:GetPlayers()) do
@@ -240,26 +304,24 @@ local TogglePlayers = PlayerTab:CreateToggle({
                          createLineAndNameToPlayer(targetPlayer)
                       end
                    end
-                   game.Players.PlayerAdded:Connect(function(targetPlayer)
-                      if targetPlayer ~= game.Players.LocalPlayer then
-                         createLineAndNameToPlayer(targetPlayer)
-                      end
-                   end)
+ 
                    while Value do
-                      wait(1)
+                      wait(1)  -- Проверяем раз в секунду
                    end
                    playerRunning = false
                 end
              else
+                -- Когда тумблер выключен, удаляем все линии и BillboardGui
                 for _, data in ipairs(playerLines) do
-                   data[1]:Destroy()
-                   data[2]:Destroy()
+                   data[1]:Destroy()  -- Линия
+                   data[2]:Destroy()  -- Никнейм
                 end
                 playerLines = {}
-                break
+                break  -- Выход из асинхронной функции, чтобы больше не выполнять код
              end
-             wait(1)
+             wait(1)  -- Пауза между итерациями
           end
        end)
     end,
-})
+ })
+ 
