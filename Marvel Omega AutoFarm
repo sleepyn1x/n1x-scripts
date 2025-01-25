@@ -158,30 +158,18 @@ local ToggleChests = PlayerTab:CreateToggle({
              if Value then
                 if not chestRunning then
                    chestRunning = true
-                   local targetPart = nil
                    for _, part in pairs(workspace:GetChildren()) do
                       if part.Name == "Chest" and part:FindFirstChild("Body") then
-                         targetPart = part.Body
-                         break
+                         createLineAndBoxToChest(part.Body)
                       end
                    end
-                   if targetPart then
-                      createLineAndBoxToChest(targetPart)
-                   end
+                   workspace.ChildAdded:Connect(function(child)
+                      if child.Name == "Chest" and child:FindFirstChild("Body") then
+                         createLineAndBoxToChest(child.Body)
+                      end
+                   end)
                    while Value do
-                      if targetPart and targetPart.Parent then
-                         wait(1)
-                      else
-                         if chestLine then
-                            chestLine:Destroy()
-                            chestLine = nil
-                         end
-                         if chestBox then
-                            chestBox:Destroy()
-                            chestBox = nil
-                         end
-                         break
-                      end
+                      wait(1)
                    end
                    chestRunning = false
                 end
@@ -252,6 +240,11 @@ local TogglePlayers = PlayerTab:CreateToggle({
                          createLineAndNameToPlayer(targetPlayer)
                       end
                    end
+                   game.Players.PlayerAdded:Connect(function(targetPlayer)
+                      if targetPlayer ~= game.Players.LocalPlayer then
+                         createLineAndNameToPlayer(targetPlayer)
+                      end
+                   end)
                    while Value do
                       wait(1)
                    end
