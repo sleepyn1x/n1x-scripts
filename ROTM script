@@ -178,9 +178,10 @@ local ToggleChests = PlayerTab:CreateToggle({
 
                    -- Ищем целевую часть в Debris
                    for _, part in pairs(workspace.Debris:GetChildren()) do
-                      print(part.Name)  -- Для отладки
+                      print("Checking part: " .. part.Name)  -- Для отладки
                       if part.Name == "MeshPart" and part:FindFirstChild("Body") then
                          targetPart = part.Body
+                         print("Found target part: " .. part.Name)  -- Для отладки
                          break
                       end
                    end
