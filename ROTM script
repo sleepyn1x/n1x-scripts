@@ -1,0 +1,452 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+if not Rayfield then
+    warn("Rayfield module failed to load.")
+end
+
+local Window = Rayfield:CreateWindow({
+    Name = "sleepyn1x ROTM",
+    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+    LoadingTitle = "ROTM Script",
+    LoadingSubtitle = "by sleepyn1x",
+    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil, -- Create a custom folder for your hub/game
+       FileName = "Big Hub"
+    },
+
+    Discord = {
+       Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+       Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+    },
+
+    KeySystem = false, -- Set this to true to use our key system
+    KeySettings = {
+       Title = "Untitled",
+       Subtitle = "Key System",
+       Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+       SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+       Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+    }
+})
+
+local PlayerTab = Window:CreateTab("Player", 4483362458) -- Title, Image
+
+-- Toggle element to start/stop the autofarm
+local Toggle = PlayerTab:CreateToggle({
+    Name = "AutoFarm",
+    CurrentValue = false,
+    Flag = "FarmToggle",
+    Callback = function(Value)
+       -- Название целевой части
+       local targetPartName = "MeshPart"
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+       local isActivatingPrompt = false  
+ 
+       -- Функция для телепортации и активации ProximityPrompt
+       local function teleportAndActivatePrompt(targetPart)
+          -- Телепортируем игрока к целевой части
+          humanoidRootPart.CFrame = targetPart.CFrame
+          
+          -- Ищем ProximityPrompt в целевой части
+          local proximityPrompt = targetPart:FindFirstChildOfClass("ProximityPrompt")
+          if proximityPrompt and proximityPrompt.Enabled and not isActivatingPrompt then
+             isActivatingPrompt = true  -- Флаг для предотвращения множественной активации
+             
+             -- Активируем ProximityPrompt
+             fireproximityprompt(proximityPrompt)
+ 
+             isActivatingPrompt = false
+          else
+             if not proximityPrompt then
+                warn("ProximityPrompt не найден в " .. targetPart.Name)
+             elseif not proximityPrompt.Enabled then
+                warn("ProximityPrompt отключен в " .. targetPart.Name)
+             end
+          end
+       end
+ 
+       -- Функция для выполнения цикла AutoFarm
+       task.spawn(function()
+          while Value do
+             -- Ищем целевую часть в Workspace.Debris
+             local debris = workspace:FindFirstChild("Debris")
+             if debris then
+                local targetPart = debris:FindFirstChild(targetPartName)
+                if targetPart then
+                   teleportAndActivatePrompt(targetPart)
+                else
+                   warn("Целевая часть '" .. targetPartName .. "' не найдена в Workspace.Debris")
+                end
+             else
+                warn("Debris не найден в Workspace")
+             end
+             wait(1) -- Задержка перед следующей итерацией
+          end
+       end)
+    end,
+ })
+ 
+
+-- Slider for WalkSpeed
+local WalkSpeedSlider = PlayerTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {10, 100},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 10,
+    Flag = "Slider1",
+    Callback = function(Value)
+        -- Ожидаем, пока Humanoid будет доступен
+        local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+        humanoid.WalkSpeed = Value
+    end,
+})
+
+-- Slider for JumpPower
+local JumpPowerSlider = PlayerTab:CreateSlider({
+    Name = "JumpPower",
+    Range = {10, 500},
+    Increment = 1,
+    Suffix = "Power",
+    CurrentValue = 10,
+    Flag = "Slider2",
+    Callback = function(Value)
+        local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+        humanoid.JumpPower = Value
+    end,
+})
+
+
+local ToggleChests = PlayerTab:CreateToggle({
+    Name = "Show Chest Lines & Boxes",
+    CurrentValue = false,  
+    Flag = "ChestLineBoxToggle",
+    Callback = function(Value)
+       local chestLine = nil
+       local chestBox = nil
+       local chestRunning = false
+
+       -- Функция для создания линии и коробки к части
+       local function createLineAndBoxToChest(chestPart)
+          if chestLine then
+             chestLine:Destroy()
+          end
+          if chestBox then
+             chestBox:Destroy()
+          end
+
+          -- Создаем линию
+          chestLine = Instance.new("Beam")
+          chestLine.Parent = game.Workspace
+          local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
+          local attachment2 = Instance.new("Attachment", chestPart)
+          attachment1.Position = Vector3.new(0, 1, 0)
+          attachment2.Position = Vector3.new(0, 1, 0)
+          chestLine.Attachment0 = attachment1
+          chestLine.Attachment1 = attachment2
+          chestLine.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180))
+          chestLine.Width0 = 0.2
+          chestLine.Width1 = 0.2
+
+          -- Создаем бокс вокруг Chest
+          chestBox = Instance.new("BoxHandleAdornment")
+          chestBox.Parent = chestPart
+          chestBox.Size = chestPart.Size + Vector3.new(0.5, 0.5, 0.5)
+          chestBox.Adornee = chestPart
+          chestBox.Color3 = Color3.fromRGB(255, 105, 180)
+          chestBox.Transparency = 0.5
+          chestBox.ZIndex = 5
+          chestBox.AlwaysOnTop = true
+       end
+
+       task.spawn(function()
+          while true do
+             if Value then
+                if not chestRunning then
+                   chestRunning = true
+                   local targetPart = nil
+
+                   -- Ищем целевую часть в Debris
+                   for _, part in pairs(workspace.Debris:GetChildren()) do
+                      print(part.Name)  -- Для отладки
+                      if part.Name == "MeshPart" and part:FindFirstChild("Body") then
+                         targetPart = part.Body
+                         break
+                      end
+                   end
+
+                   if targetPart then
+                      createLineAndBoxToChest(targetPart)
+                   end
+
+                   -- Проверка на существование targetPart
+                   while Value do
+                      if targetPart and targetPart.Parent then
+                         wait(1)
+                      else
+                         if chestLine then
+                            chestLine:Destroy()
+                            chestLine = nil
+                         end
+                         if chestBox then
+                            chestBox:Destroy()
+                            chestBox = nil
+                         end
+                         break
+                      end
+                   end
+                   chestRunning = false
+                end
+             else
+                -- Очистка
+                if chestLine then
+                   chestLine:Destroy()
+                   chestLine = nil
+                end
+                if chestBox then
+                   chestBox:Destroy()
+                   chestBox = nil
+                end
+                break
+             end
+             wait(1)
+          end
+       end)
+    end,
+})
+
+ 
+
+ local TogglePlayers = PlayerTab:CreateToggle({
+    Name = "Show Player Lines & Names",
+    CurrentValue = false,  
+    Flag = "PlayerLineToggle",
+    Callback = function(Value)
+       local playerLines = {}
+       local playerRunning = false
+ 
+
+       local function createLineAndNameToPlayer(targetPlayer)
+          local character = targetPlayer.Character
+          if not character then return end
+ 
+
+          local targetPart = character:WaitForChild("HumanoidRootPart")
+          local line = Instance.new("Beam")
+          line.Parent = game.Workspace
+          local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
+          local attachment2 = Instance.new("Attachment", targetPart)
+          attachment1.Position = Vector3.new(0, 1, 0)
+          attachment2.Position = Vector3.new(0, 1, 0)
+          line.Attachment0 = attachment1
+          line.Attachment1 = attachment2
+          line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))  -- Оранжевая линия
+          line.Width0 = 0.2
+          line.Width1 = 0.2
+ 
+          -- Создаем BillboardGui для отображения никнейма с прозрачным фоном
+          local billboard = Instance.new("BillboardGui")
+          billboard.Parent = targetPart
+          billboard.Adornee = targetPart
+          billboard.Size = UDim2.new(0, 100, 0, 50)
+          billboard.StudsOffset = Vector3.new(0, 3, 0)
+          billboard.AlwaysOnTop = true  -- Ник всегда виден сквозь стены
+ 
+          local textLabel = Instance.new("TextLabel")
+          textLabel.Parent = billboard
+          textLabel.Size = UDim2.new(1, 0, 1, 0)
+          textLabel.Text = targetPlayer.Name
+          textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)  -- Оранжевый цвет
+          textLabel.TextStrokeTransparency = 0.5
+          textLabel.TextSize = 16
+          textLabel.BackgroundTransparency = 1  -- Прозрачный фон
+ 
+          -- Сохраняем линию и BillboardGui
+          table.insert(playerLines, {line, billboard})
+       end
+ 
+       -- Асинхронное обновление
+       task.spawn(function()
+          while true do
+             if Value then  -- Если тумблер включен
+                if not playerRunning then
+                   playerRunning = true
+                   for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+                      if targetPlayer ~= game.Players.LocalPlayer then
+                         createLineAndNameToPlayer(targetPlayer)
+                      end
+                   end
+ 
+                   while Value do
+                      wait(1)  -- Проверяем раз в секунду
+                   end
+                   playerRunning = false
+                end
+             else
+                -- Когда тумблер выключен, удаляем все линии и BillboardGui
+                for _, data in ipairs(playerLines) do
+                   data[1]:Destroy()  -- Линия
+                   data[2]:Destroy()  -- Никнейм
+                end
+                playerLines = {}
+                break  -- Выход из асинхронной функции, чтобы больше не выполнять код
+             end
+             wait(1)  -- Пауза между итерациями
+          end
+       end)
+    end,
+ })
+ 
+
+-- Button to Force Remove Ability Cooldowns
+local CooldownButton = PlayerTab:CreateButton({
+    Name = "Force Remove Ability Cooldowns",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local cooldownsFolder = player:FindFirstChild("Cooldowns")
+        
+        if not cooldownsFolder then
+            warn("Cooldowns folder not found for the player!")
+            return
+        end
+
+        -- Флаг для остановки цикла
+        local isRunning = true
+
+        -- Функция для принудительного сброса перезарядки
+        local function resetCooldowns()
+            while isRunning do
+                for _, cooldown in pairs(cooldownsFolder:GetChildren()) do
+                    if cooldown:IsA("NumberValue") then
+                        cooldown.Value = 0
+                        cooldown.Changed:Connect(function()
+                            cooldown.Value = 0 -- Перезаписываем, если изменено
+                        end)
+                    end
+                end
+                task.wait(0.1) -- Обновляем чаще, чтобы перебить другой скрипт
+            end
+        end
+
+        -- Запуск сброса
+        task.spawn(resetCooldowns)
+
+        -- Логика для остановки сброса
+        CooldownButton:SetName("Stop Cooldown Reset")
+        CooldownButton:SetCallback(function()
+            isRunning = false
+            CooldownButton:SetName("Force Remove Ability Cooldowns")
+            CooldownButton:SetCallback(Callback) -- Сбросить к изначальной функции
+        end)
+    end,
+})
+
+
+-- Button to Force Reset Cooldown Texts
+local CooldownTextButton = PlayerTab:CreateButton({
+    Name = "Force Cooldown Text to 0",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local iconsFolder = player:WaitForChild("PlayerGui"):WaitForChild("GameInterface"):WaitForChild("Icons")
+        
+        -- Проверяем наличие папки Icons
+        if not iconsFolder then
+            warn("Icons folder not found in GameInterface!")
+            return
+        end
+
+        -- Флаг для остановки цикла
+        local isRunning = true
+
+        -- Функция для обновления текста
+        local function resetCooldownTexts()
+            while isRunning do
+                for _, imageButton in pairs(iconsFolder:GetChildren()) do
+                    if imageButton:IsA("ImageButton") then
+                        local textLabel = imageButton:FindFirstChild("Cooldown")
+                        if textLabel and textLabel:IsA("TextLabel") then
+                            textLabel.Text = "0" -- Устанавливаем текст в 0
+                            textLabel.Changed:Connect(function()
+                                textLabel.Text = "0" -- Принудительно перезаписываем, если изменено
+                            end)
+                        end
+                    end
+                end
+                task.wait(0.1) -- Обновляем с интервалом 0.1 секунды
+            end
+        end
+
+        -- Запуск обновления текста
+        task.spawn(resetCooldownTexts)
+
+        -- Логика для остановки
+        CooldownTextButton:SetName("Stop Cooldown Text Reset")
+        CooldownTextButton:SetCallback(function()
+            isRunning = false
+            CooldownTextButton:SetName("Force Cooldown Text to 0")
+            CooldownTextButton:SetCallback(Callback) -- Сбросить к изначальной функции
+        end)
+    end,
+})
+
+
+-- Button to Force Reset Cooldown Texts in Abilities Panel
+local CooldownTextButton = PlayerTab:CreateButton({
+    Name = "Force Abilities Cooldown Text to 0",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local scrollingFrame = player:WaitForChild("PlayerGui")
+            :WaitForChild("GameInterface")
+            :WaitForChild("SettingPannel")
+            :WaitForChild("Abilities")
+            :WaitForChild("ScrollingFrame")
+        
+        -- Проверяем наличие ScrollingFrame
+        if not scrollingFrame then
+            warn("Abilities ScrollingFrame not found!")
+            return
+        end
+
+        -- Флаг для остановки цикла
+        local isRunning = true
+
+        -- Функция для обновления текста
+        local function resetCooldownTexts()
+            while isRunning do
+                for _, imageButton in pairs(scrollingFrame:GetChildren()) do
+                    if imageButton:IsA("ImageButton") then
+                        local textLabel = imageButton:FindFirstChild("Cooldown")
+                        if textLabel and textLabel:IsA("TextLabel") then
+                            textLabel.Text = "0" -- Устанавливаем текст в 0
+                            textLabel.Changed:Connect(function()
+                                textLabel.Text = "0" -- Принудительно перезаписываем, если изменено
+                            end)
+                        end
+                    end
+                end
+                task.wait(0.1) -- Обновляем с интервалом 0.1 секунды
+            end
+        end
+
+        -- Запуск обновления текста
+        task.spawn(resetCooldownTexts)
+
+        -- Логика для остановки
+        CooldownTextButton:SetName("Stop Abilities Cooldown Text Reset")
+        CooldownTextButton:SetCallback(function()
+            isRunning = false
+            CooldownTextButton:SetName("Force Abilities Cooldown Text to 0")
+            CooldownTextButton:SetCallback(Callback) -- Сбросить к изначальной функции
+        end)
+    end,
+})
