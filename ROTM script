@@ -174,51 +174,28 @@ local ToggleChests = PlayerTab:CreateToggle({
              if Value then
                 if not chestRunning then
                    chestRunning = true
-                   local targetPart = nil
 
                    -- Проверяем, существует ли контейнер Debris
                    local debris = workspace:FindFirstChild("Debris")
                    if debris then
-                      -- Ищем объект с именем "MeshPart" в Debris
-                      targetPart = debris:FindFirstChild("MeshPart")
-                      if targetPart then
-                         print("Found MeshPart: " .. targetPart.Name)  -- Для отладки
-                         -- Проверка наличия дочернего Body
-                         if targetPart:FindFirstChild("Body") then
-                            targetPart = targetPart.Body
-                            print("Found target part (Body): " .. targetPart.Name)  -- Для отладки
-                         else
-                            print("No Body found in " .. targetPart.Name)  -- Для отладки
+                      -- Перебираем все объекты типа MeshPart в Debris
+                      for _, part in pairs(debris:GetChildren()) do
+                         if part:IsA("MeshPart") then
+                            -- Ищем Body внутри MeshPart, если он есть
+                            local targetPart = part:FindFirstChild("Body")
+                            if targetPart then
+                               createLineAndBoxToChest(targetPart)
+                            end
                          end
-                      else
-                         print("MeshPart not found in Debris")  -- Для отладки
                       end
                    else
                       print("No Debris container found in workspace")  -- Для отладки
                    end
 
-                   -- Если найден целевой объект, создаем линию и коробку
-                   if targetPart then
-                      createLineAndBoxToChest(targetPart)
-                   else
-                      print("Target part not found.")  -- Для отладки
-                   end
-
-                   -- Проверка на существование targetPart
+                   -- Периодически проверяем состояние
                    while Value do
-                      if targetPart and targetPart.Parent then
-                         wait(1)
-                      else
-                         if chestLine then
-                            chestLine:Destroy()
-                            chestLine = nil
-                         end
-                         if chestBox then
-                            chestBox:Destroy()
-                            chestBox = nil
-                         end
-                         break
-                      end
+                      -- Преобразуем старые линии и коробки
+                      wait(1)
                    end
                    chestRunning = false
                 end
@@ -239,6 +216,7 @@ local ToggleChests = PlayerTab:CreateToggle({
        end)
     end,
 })
+
 
  
 
