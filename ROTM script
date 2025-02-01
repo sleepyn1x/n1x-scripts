@@ -300,147 +300,192 @@ local ToggleChests = PlayerTab:CreateToggle({
     end,
  })
  
+ local PlayerTab = Window:CreateTab("Target")
 
--- Button to Force Remove Ability Cooldowns
-local CooldownButton = PlayerTab:CreateButton({
-    Name = "Force Remove Ability Cooldowns",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local cooldownsFolder = player:FindFirstChild("Cooldowns")
-        
-        if not cooldownsFolder then
-            warn("Cooldowns folder not found for the player!")
-            return
-        end
+ local TweenService = game:GetService("TweenService")
+local targetPlayerName = ""
+local previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
 
-        -- Флаг для остановки цикла
-        local isRunning = true
-
-        -- Функция для принудительного сброса перезарядки
-        local function resetCooldowns()
-            while isRunning do
-                for _, cooldown in pairs(cooldownsFolder:GetChildren()) do
-                    if cooldown:IsA("NumberValue") then
-                        cooldown.Value = 0
-                        cooldown.Changed:Connect(function()
-                            cooldown.Value = 0 -- Перезаписываем, если изменено
-                        end)
-                    end
-                end
-                task.wait(0.1) -- Обновляем чаще, чтобы перебить другой скрипт
-            end
-        end
-
-        -- Запуск сброса
-        task.spawn(resetCooldowns)
-
-        -- Логика для остановки сброса
-        CooldownButton:SetName("Stop Cooldown Reset")
-        CooldownButton:SetCallback(function()
-            isRunning = false
-            CooldownButton:SetName("Force Remove Ability Cooldowns")
-            CooldownButton:SetCallback(Callback) -- Сбросить к изначальной функции
-        end)
+local Input = PlayerTab:CreateInput({
+    Name = "Target Player Name",
+    CurrentValue = "",
+    PlaceholderText = "Enter target player's name",
+    RemoveTextAfterFocusLost = false,
+    Flag = "TargetNameInput",
+    Callback = function(Text)
+        targetPlayerName = Text
+        print("Target player set to: " .. targetPlayerName)
     end,
 })
 
+local AutoClickToggle = PlayerTab:CreateToggle({
+   Name = "Auto Clicker",
+   CurrentValue = false,
+   Flag = "AutoClickToggle",
+   Callback = function(Value)
+       getgenv().AutoClick = Value
+       task.spawn(function()
+           while getgenv().AutoClick do
+               mouse1click()
+               wait(0.05) -- Скорость кликов
+           end
+       end)
+   end,
+})
 
--- Button to Force Reset Cooldown Texts
-local CooldownTextButton = PlayerTab:CreateButton({
-    Name = "Force Cooldown Text to 0",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local iconsFolder = player:WaitForChild("PlayerGui"):WaitForChild("GameInterface"):WaitForChild("Icons")
-        
-        -- Проверяем наличие папки Icons
-        if not iconsFolder then
-            warn("Icons folder not found in GameInterface!")
-            return
-        end
 
-        -- Флаг для остановки цикла
-        local isRunning = true
+local AutoAimToggle = PlayerTab:CreateToggle({
+   Name = "Auto Aim",
+   CurrentValue = false,
+   Flag = "AutoAimToggle",
+   Callback = function(Value)
+       getgenv().AutoAim = Value
+       task.spawn(function()
+           while getgenv().AutoAim do
+               local targetPlayer = game.Players:FindFirstChild(targetPlayerName)
+               if targetPlayer and targetPlayer.Character then
+                   local targetPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                   if targetPart then
+                       local camera = workspace.CurrentCamera
+                       local direction = (targetPart.Position - camera.CFrame.Position).unit
+                       local newCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
+                       camera.CFrame = newCFrame
+                   end
+               end
+               wait(0.02) -- Плавность авто-аима
+           end
+       end)
+   end,
+})
 
-        -- Функция для обновления текста
-        local function resetCooldownTexts()
-            while isRunning do
-                for _, imageButton in pairs(iconsFolder:GetChildren()) do
-                    if imageButton:IsA("ImageButton") then
-                        local textLabel = imageButton:FindFirstChild("Cooldown")
-                        if textLabel and textLabel:IsA("TextLabel") then
-                            textLabel.Text = "0" -- Устанавливаем текст в 0
-                            textLabel.Changed:Connect(function()
-                                textLabel.Text = "0" -- Принудительно перезаписываем, если изменено
-                            end)
+
+local distanceAroundTarget = 10  
+local stayDurationNearTarget = 3  
+local backDuration = 2  
+
+local DistanceSlider = PlayerTab:CreateSlider({
+    Name = "Distance Around Target",
+    Range = {5, 50},
+    Increment = 1,
+    Suffix = "Studs",
+    CurrentValue = distanceAroundTarget,
+    Flag = "DistanceSlider",
+    Callback = function(Value)
+        distanceAroundTarget = Value
+        print("Distance set to: " .. distanceAroundTarget)
+    end,
+})
+
+-- Исправим работу слайдера StayTimeSlider
+local StayTimeSlider = PlayerTab:CreateSlider({
+    Name = "Stay Duration Near Target",
+    Range = {1, 10},
+    Increment = 1,
+    Suffix = "Seconds",
+    CurrentValue = stayDurationNearTarget,
+    Flag = "StayTimeSlider",
+    Callback = function(Value)
+        stayDurationNearTarget = Value
+        print("Stay duration set to: " .. stayDurationNearTarget)
+    end,
+})
+
+-- Исправим работу слайдера BackTimeSlider
+local BackTimeSlider = PlayerTab:CreateSlider({
+    Name = "Back Duration After Move",
+    Range = {1, 10},
+    Increment = 1,
+    Suffix = "Seconds",
+    CurrentValue = backDuration,
+    Flag = "BackTimeSlider",
+    Callback = function(Value)
+        backDuration = Value
+        print("Back duration set to: " .. backDuration)
+    end,
+})
+
+local startMoving = false
+
+local ToggleMove = PlayerTab:CreateToggle({
+    Name = "Start Moving to Target",
+    CurrentValue = false,
+    Flag = "MoveToggle",
+    Callback = function(Value)
+        if Value then
+            startMoving = true
+            print("Movement started")
+
+            task.spawn(function()
+                while startMoving do
+                    local targetPlayer = game.Players:FindFirstChild(targetPlayerName)
+                    if targetPlayer and targetPlayer.Character then
+                        local targetPosition = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if targetPosition then
+                            local humanoidRootPart = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+                            previousPosition = humanoidRootPart.CFrame
+
+                            -- Цикличное движение вокруг цели с случайными точками
+                            local angle = math.random() * 2 * math.pi
+                            local xOffset = math.cos(angle) * distanceAroundTarget
+                            local zOffset = math.sin(angle) * distanceAroundTarget
+                            local movePosition = targetPosition.CFrame * CFrame.new(xOffset, 10, zOffset)  -- Добавляем 10 единиц по оси Y
+
+                            -- Моментальное перемещение
+                            humanoidRootPart.CFrame = movePosition
+                            print("Moved to: " .. tostring(movePosition))
+
+                            -- Плавное следование за целью с ускорением
+                            local targetHumanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+                            local lastPosition = targetPosition.Position
+
+                            -- Следуем за таргетом
+                            local startTime = tick()
+                            while startMoving and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") do
+                                local targetRootPart = targetPlayer.Character.HumanoidRootPart
+                                local targetPos = targetRootPart.Position
+                                local moveDistance = (targetPos - lastPosition).Magnitude
+
+                                if moveDistance > 0 then
+                                    local direction = (targetPos - humanoidRootPart.Position).unit
+                                    local newTargetPos = targetPos + direction * distanceAroundTarget
+                                    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear)  -- Уменьшаем длительность для ускоренного движения
+                                    local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(newTargetPos.X, newTargetPos.Y + 10, newTargetPos.Z)})
+                                    tween:Play()
+                                    tween.Completed:Wait()
+                                end
+
+                                lastPosition = targetPos
+                                -- Ожидание перед обновлением позиции
+                                wait(0.1)
+                                
+                                -- Прерывание по времени нахождения рядом
+                                if tick() - startTime > stayDurationNearTarget then
+                                    break
+                                end
+                            end
+
+                            -- После завершения следования, возвращаем на исходную позицию
+                            humanoidRootPart.CFrame = previousPosition
+                            print("Returned to previous position: " .. tostring(previousPosition))
+
+                            -- Ожидание перед следующей итерацией
+                            wait(backDuration)
+                        else
+                            warn("Target's HumanoidRootPart not found!")
                         end
+                    else
+                        warn("Target player not found or missing character!")
                     end
                 end
-                task.wait(0.1) -- Обновляем с интервалом 0.1 секунды
-            end
+            end)
+        else
+            startMoving = false
+            print("Movement stopped")
         end
-
-        -- Запуск обновления текста
-        task.spawn(resetCooldownTexts)
-
-        -- Логика для остановки
-        CooldownTextButton:SetName("Stop Cooldown Text Reset")
-        CooldownTextButton:SetCallback(function()
-            isRunning = false
-            CooldownTextButton:SetName("Force Cooldown Text to 0")
-            CooldownTextButton:SetCallback(Callback) -- Сбросить к изначальной функции
-        end)
     end,
 })
 
-
--- Button to Force Reset Cooldown Texts in Abilities Panel
-local CooldownTextButton = PlayerTab:CreateButton({
-    Name = "Force Abilities Cooldown Text to 0",
-    Callback = function()
-        local player = game.Players.LocalPlayer
-        local scrollingFrame = player:WaitForChild("PlayerGui")
-            :WaitForChild("GameInterface")
-            :WaitForChild("SettingPannel")
-            :WaitForChild("Abilities")
-            :WaitForChild("ScrollingFrame")
-        
-        -- Проверяем наличие ScrollingFrame
-        if not scrollingFrame then
-            warn("Abilities ScrollingFrame not found!")
-            return
-        end
-
-        -- Флаг для остановки цикла
-        local isRunning = true
-
-        -- Функция для обновления текста
-        local function resetCooldownTexts()
-            while isRunning do
-                for _, imageButton in pairs(scrollingFrame:GetChildren()) do
-                    if imageButton:IsA("ImageButton") then
-                        local textLabel = imageButton:FindFirstChild("Cooldown")
-                        if textLabel and textLabel:IsA("TextLabel") then
-                            textLabel.Text = "0" -- Устанавливаем текст в 0
-                            textLabel.Changed:Connect(function()
-                                textLabel.Text = "0" -- Принудительно перезаписываем, если изменено
-                            end)
-                        end
-                    end
-                end
-                task.wait(0.1) -- Обновляем с интервалом 0.1 секунды
-            end
-        end
-
-        -- Запуск обновления текста
-        task.spawn(resetCooldownTexts)
-
-        -- Логика для остановки
-        CooldownTextButton:SetName("Stop Abilities Cooldown Text Reset")
-        CooldownTextButton:SetCallback(function()
-            isRunning = false
-            CooldownTextButton:SetName("Force Abilities Cooldown Text to 0")
-            CooldownTextButton:SetCallback(Callback) -- Сбросить к изначальной функции
-        end)
-    end,
-})
-
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
+    print("Player position saved: " .. tostring(previousPosition))
+end)
