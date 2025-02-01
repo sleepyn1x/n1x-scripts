@@ -128,7 +128,7 @@ local JumpPowerSlider = PlayerTab:CreateSlider({
 
 
 local ToggleChests = PlayerTab:CreateToggle({
-    Name = "Show Chest Lines & Boxes",
+    Name = "Show Chest",
     CurrentValue = false,  
     Flag = "ChestLineBoxToggle",
     Callback = function(Value)
@@ -221,7 +221,7 @@ local ToggleChests = PlayerTab:CreateToggle({
  
 
  local TogglePlayers = PlayerTab:CreateToggle({
-    Name = "Show Player Lines & Names",
+    Name = "Show Player",
     CurrentValue = false,  
     Flag = "PlayerLineToggle",
     Callback = function(Value)
@@ -307,7 +307,7 @@ local targetPlayerName = ""
 local previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
 
 local Input = PlayerTab:CreateInput({
-    Name = "Target Player Name",
+    Name = "Enter Target Player Name",
     CurrentValue = "",
     PlaceholderText = "Enter target player's name",
     RemoveTextAfterFocusLost = false,
@@ -318,24 +318,8 @@ local Input = PlayerTab:CreateInput({
     end,
 })
 
-local AutoClickToggle = PlayerTab:CreateToggle({
-   Name = "Auto Clicker",
-   CurrentValue = false,
-   Flag = "AutoClickToggle",
-   Callback = function(Value)
-       getgenv().AutoClick = Value
-       task.spawn(function()
-           while getgenv().AutoClick do
-               mouse1click()
-               wait(0.05) -- Скорость кликов
-           end
-       end)
-   end,
-})
-
-
 local AutoAimToggle = PlayerTab:CreateToggle({
-   Name = "Auto Aim",
+   Name = "Camera Target Lock",
    CurrentValue = false,
    Flag = "AutoAimToggle",
    Callback = function(Value)
@@ -348,11 +332,16 @@ local AutoAimToggle = PlayerTab:CreateToggle({
                    if targetPart then
                        local camera = workspace.CurrentCamera
                        local direction = (targetPart.Position - camera.CFrame.Position).unit
-                       local newCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
-                       camera.CFrame = newCFrame
+                       
+                       -- Используем плавную интерполяцию для движения камеры
+                       local targetCFrame = CFrame.lookAt(camera.CFrame.Position, targetPart.Position)
+                       local smoothCFrame = camera.CFrame:Lerp(targetCFrame, 0.1) -- Можно настроить скорость плавности
+
+                       -- Применяем новый CFrame
+                       camera.CFrame = smoothCFrame
                    end
                end
-               wait(0.02) -- Плавность авто-аима
+               wait(0.01) -- Более частое обновление (усилит реакцию)
            end
        end)
    end,
@@ -365,7 +354,7 @@ local backDuration = 2
 
 local DistanceSlider = PlayerTab:CreateSlider({
     Name = "Distance Around Target",
-    Range = {5, 50},
+    Range = {1, 50},
     Increment = 1,
     Suffix = "Studs",
     CurrentValue = distanceAroundTarget,
@@ -379,7 +368,7 @@ local DistanceSlider = PlayerTab:CreateSlider({
 -- Исправим работу слайдера StayTimeSlider
 local StayTimeSlider = PlayerTab:CreateSlider({
     Name = "Stay Duration Near Target",
-    Range = {1, 10},
+    Range = {1, 50},
     Increment = 1,
     Suffix = "Seconds",
     CurrentValue = stayDurationNearTarget,
@@ -390,10 +379,9 @@ local StayTimeSlider = PlayerTab:CreateSlider({
     end,
 })
 
--- Исправим работу слайдера BackTimeSlider
 local BackTimeSlider = PlayerTab:CreateSlider({
     Name = "Back Duration After Move",
-    Range = {1, 10},
+    Range = {1, 50},
     Increment = 1,
     Suffix = "Seconds",
     CurrentValue = backDuration,
@@ -407,7 +395,7 @@ local BackTimeSlider = PlayerTab:CreateSlider({
 local startMoving = false
 
 local ToggleMove = PlayerTab:CreateToggle({
-    Name = "Start Moving to Target",
+    Name = "Follow Target (ENTER TARGET NAME)",
     CurrentValue = false,
     Flag = "MoveToggle",
     Callback = function(Value)
@@ -489,3 +477,190 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
     previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
     print("Player position saved: " .. tostring(previousPosition))
 end)
+
+
+
+local PlayerTab = Window:CreateTab("AutoClicker")
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Keybind for Auto Clicker
+local AutoClickerActive = false  -- To track if the AutoClicker is active
+
+local Keybind = PlayerTab:CreateKeybind({
+    Name = "Enter Clicker Keybind",  -- Name of the keybind
+    CurrentKeybind = "Q",  -- The default key is Q, can change as needed
+    HoldToInteract = false,  -- Set to false, the action will trigger on key press
+    Flag = "AutoClickerKeybind",  -- Flag for configuration saving
+    Callback = function(Keybind)
+        -- Toggle Auto Clicker on/off when the keybind is pressed
+        AutoClickerActive = not AutoClickerActive  -- Flip the active state
+        if AutoClickerActive then
+            print("Auto Clicker Activated")
+            -- Start the auto-clicker if not already active
+            task.spawn(function()
+                while AutoClickerActive do
+                    if not UserInputService:GetFocusedTextBox() then -- Check if no text box is focused
+                        local MousePos = game.Players.LocalPlayer:GetMouse().Hit.p
+                        local Target = game.Players.LocalPlayer:GetMouse().Target
+                        if Target and not Target:IsDescendantOf(game.Players.LocalPlayer.PlayerGui) then
+                            mouse1click() -- Click if the cursor is not over a GUI
+                        end
+                    end
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000000001) -- Adjust the speed of clicking here
+                end
+            end)
+        else
+            print("Auto Clicker Deactivated")
+        end
+    end,
+})
+
+
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Переменная для отслеживания состояния авто-спама клавиши
+local AutoKeySpamActive = false  -- Чтобы отслеживать, активен ли спам
+
+-- Переменная для хранения выбранной клавиши для спама
+local KeyToSpam = Enum.KeyCode.T  -- По умолчанию будет клавиша G
+
+-- Создаем кейбинд для выбора клавиши для спама
+local Keybind = PlayerTab:CreateKeybind({
+    Name = "Enter Keybind for Spam",  -- Название кейбинда
+    CurrentKeybind = "T",  -- По умолчанию будет клавиша G
+    HoldToInteract = false,  -- Устанавливаем в false, чтобы активировать при нажатии
+    Flag = "AutoKeySpamKeybind",  -- Флаг для сохранения конфигурации
+    Callback = function(Keybind)
+        -- Обновляем клавишу для спама на ту, которую выбрал пользователь
+        KeyToSpam = Enum.KeyCode[Keybind] or KeyToSpam  -- Обновляем выбранную клавишу
+        print("Spam key set to: " .. KeyToSpam.Name)  -- Выводим информацию о выбранной клавише
+    end,
+})
+
+-- Создаем кейбинд для активации спама
+local SpamKeybind = PlayerTab:CreateKeybind({
+    Name = "Activate Key Spam",  -- Название кейбинда для активации спама
+    CurrentKeybind = "H",  -- По умолчанию будет клавиша H для активации
+    HoldToInteract = false,  -- Устанавливаем в false, чтобы активировать при нажатии
+    Flag = "AutoKeySpamActivateKeybind",  -- Флаг для сохранения конфигурации
+    Callback = function(Keybind)
+        -- Переключаем активность спама клавиши
+        AutoKeySpamActive = not AutoKeySpamActive  -- Переворачиваем состояние
+        if AutoKeySpamActive then
+            print("Key Spam Activated")
+            -- Запускаем спам выбранной клавишей
+            task.spawn(function()
+                while AutoKeySpamActive do
+                    -- Спамим выбранной клавишей
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, KeyToSpam, false, game)
+                    wait(0.000000000000000000000000000000000000000000000000000000000000000000001)  -- Задержка между нажатиями (можно настроить по вашему усмотрению)
+                end
+            end)
+        else
+            print("Key Spam Deactivated")
+        end
+    end,
+})
+
+
+
+
+local PlayerTab = Window:CreateTab("Teleports")
+
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Church",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "1"
+       local targetPart = workspace.SpawnLocations:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+           warn("not found!")
+       end
+   end,
+})
+
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Fountain",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "2"
+       local targetPart = workspace.SpawnLocations:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+           warn("not found!")
+       end
+   end,
+})
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to City",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "3"
+       local targetPart = workspace.SpawnLocations:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+           warn("not found!")
+       end
+   end,
+})
+
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Bellatrix Lestrange",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "Bellatrix Lestrange"
+       local targetPart = workspace.SpawnLocations.NPCSpawnPoints:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+           warn("not found!")
+       end
+   end,
+})
+
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Allison Argent",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "Allison Argent"
+       local targetPart = workspace.SpawnLocations.NPCSpawnPoints:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+           warn("not found!")
+       end
+   end,
+})
