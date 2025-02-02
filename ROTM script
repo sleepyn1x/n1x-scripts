@@ -5,99 +5,72 @@ end
 
 local Window = Rayfield:CreateWindow({
     Name = "sleepyn1x ROTM",
-    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+    Icon = 0,
     LoadingTitle = "ROTM Script",
     LoadingSubtitle = "by sleepyn1x",
-    Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
-
+    Theme = "Default",
     DisableRayfieldPrompts = false,
-    DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
-
+    DisableBuildWarnings = false,
     ConfigurationSaving = {
        Enabled = true,
-       FolderName = nil, -- Create a custom folder for your hub/game
+       FolderName = nil,
        FileName = "Big Hub"
     },
-
     Discord = {
-       Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-       Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
-       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+       Enabled = false,
+       Invite = "noinvitelink",
+       RememberJoins = true
     },
-
-    KeySystem = false, -- Set this to true to use our key system
+    KeySystem = false,
     KeySettings = {
        Title = "Untitled",
        Subtitle = "Key System",
-       Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
-       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-       SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-       Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+       Note = "No method of obtaining the key is provided",
+       FileName = "Key",
+       SaveKey = true,
+       GrabKeyFromSite = false,
+       Key = {"Hello"}
     }
 })
 
-local PlayerTab = Window:CreateTab("Player", 4483362458) -- Title, Image
+local PlayerTab = Window:CreateTab("Player", 4483362458)
 
--- Toggle element to start/stop the autofarm
 local Toggle = PlayerTab:CreateToggle({
     Name = "AutoFarm",
     CurrentValue = false,
     Flag = "FarmToggle",
     Callback = function(Value)
-       -- Название целевой части
        local targetPartName = "MeshPart"
        local player = game.Players.LocalPlayer
        local character = player.Character or player.CharacterAdded:Wait()
        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
        local isActivatingPrompt = false  
  
-       -- Функция для телепортации и активации ProximityPrompt
        local function teleportAndActivatePrompt(targetPart)
-          -- Телепортируем игрока к целевой части
           humanoidRootPart.CFrame = targetPart.CFrame
-          
-          -- Ищем ProximityPrompt в целевой части
           local proximityPrompt = targetPart:FindFirstChildOfClass("ProximityPrompt")
           if proximityPrompt and proximityPrompt.Enabled and not isActivatingPrompt then
-             isActivatingPrompt = true  -- Флаг для предотвращения множественной активации
-             
-             -- Активируем ProximityPrompt
+             isActivatingPrompt = true  
              fireproximityprompt(proximityPrompt)
- 
              isActivatingPrompt = false
-          else
-             if not proximityPrompt then
-                warn("ProximityPrompt не найден в " .. targetPart.Name)
-             elseif not proximityPrompt.Enabled then
-                warn("ProximityPrompt отключен в " .. targetPart.Name)
-             end
           end
        end
  
-       -- Функция для выполнения цикла AutoFarm
        task.spawn(function()
           while Value do
-             -- Ищем целевую часть в Workspace.Debris
              local debris = workspace:FindFirstChild("Debris")
              if debris then
                 local targetPart = debris:FindFirstChild(targetPartName)
                 if targetPart then
                    teleportAndActivatePrompt(targetPart)
-                else
-                   warn("Целевая часть '" .. targetPartName .. "' не найдена в Workspace.Debris")
                 end
-             else
-                warn("Debris не найден в Workspace")
              end
-             wait(1) -- Задержка перед следующей итерацией
+             wait(1)
           end
        end)
     end,
  })
  
-
--- Slider for WalkSpeed
 local WalkSpeedSlider = PlayerTab:CreateSlider({
     Name = "WalkSpeed",
     Range = {10, 100},
@@ -106,13 +79,11 @@ local WalkSpeedSlider = PlayerTab:CreateSlider({
     CurrentValue = 10,
     Flag = "Slider1",
     Callback = function(Value)
-        -- Ожидаем, пока Humanoid будет доступен
         local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
         humanoid.WalkSpeed = Value
     end,
 })
 
--- Slider for JumpPower
 local JumpPowerSlider = PlayerTab:CreateSlider({
     Name = "JumpPower",
     Range = {10, 500},
@@ -126,7 +97,6 @@ local JumpPowerSlider = PlayerTab:CreateSlider({
     end,
 })
 
-
 local ToggleChests = PlayerTab:CreateToggle({
     Name = "Show Chest",
     CurrentValue = false,  
@@ -136,7 +106,6 @@ local ToggleChests = PlayerTab:CreateToggle({
        local chestBox = nil
        local chestRunning = false
 
-       -- Функция для создания линии и коробки к части
        local function createLineAndBoxToChest(chestPart)
           if chestLine then
              chestLine:Destroy()
@@ -145,7 +114,6 @@ local ToggleChests = PlayerTab:CreateToggle({
              chestBox:Destroy()
           end
 
-          -- Создаем линию
           chestLine = Instance.new("Beam")
           chestLine.Parent = game.Workspace
           local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
@@ -158,7 +126,6 @@ local ToggleChests = PlayerTab:CreateToggle({
           chestLine.Width0 = 0.2
           chestLine.Width1 = 0.2
 
-          -- Создаем бокс вокруг Chest
           chestBox = Instance.new("BoxHandleAdornment")
           chestBox.Parent = chestPart
           chestBox.Size = chestPart.Size + Vector3.new(0.5, 0.5, 0.5)
@@ -174,33 +141,23 @@ local ToggleChests = PlayerTab:CreateToggle({
              if Value then
                 if not chestRunning then
                    chestRunning = true
-
-                   -- Проверяем, существует ли контейнер Debris
                    local debris = workspace:FindFirstChild("Debris")
                    if debris then
-                      -- Перебираем все объекты типа MeshPart в Debris
                       for _, part in pairs(debris:GetChildren()) do
                          if part:IsA("MeshPart") then
-                            -- Ищем Body внутри MeshPart, если он есть
                             local targetPart = part:FindFirstChild("Body")
                             if targetPart then
                                createLineAndBoxToChest(targetPart)
                             end
                          end
                       end
-                   else
-                      print("No Debris container found in workspace")  -- Для отладки
                    end
-
-                   -- Периодически проверяем состояние
                    while Value do
-                      -- Преобразуем старые линии и коробки
                       wait(1)
                    end
                    chestRunning = false
                 end
              else
-                -- Очистка
                 if chestLine then
                    chestLine:Destroy()
                    chestLine = nil
@@ -218,91 +175,91 @@ local ToggleChests = PlayerTab:CreateToggle({
 })
 
 
- 
 
- local TogglePlayers = PlayerTab:CreateToggle({
-    Name = "Show Player",
-    CurrentValue = false,  
-    Flag = "PlayerLineToggle",
-    Callback = function(Value)
-       local playerLines = {}
-       local playerRunning = false
- 
+local TogglePlayers = PlayerTab:CreateToggle({
+   Name = "Show Player",
+   CurrentValue = false,  
+   Flag = "PlayerLineToggle",
+   Callback = function(Value)
+      local playerLines = {}
+      local playerRunning = false
 
-       local function createLineAndNameToPlayer(targetPlayer)
-          local character = targetPlayer.Character
-          if not character then return end
- 
 
-          local targetPart = character:WaitForChild("HumanoidRootPart")
-          local line = Instance.new("Beam")
-          line.Parent = game.Workspace
-          local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
-          local attachment2 = Instance.new("Attachment", targetPart)
-          attachment1.Position = Vector3.new(0, 1, 0)
-          attachment2.Position = Vector3.new(0, 1, 0)
-          line.Attachment0 = attachment1
-          line.Attachment1 = attachment2
-          line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))  -- Оранжевая линия
-          line.Width0 = 0.2
-          line.Width1 = 0.2
- 
-          -- Создаем BillboardGui для отображения никнейма с прозрачным фоном
-          local billboard = Instance.new("BillboardGui")
-          billboard.Parent = targetPart
-          billboard.Adornee = targetPart
-          billboard.Size = UDim2.new(0, 100, 0, 50)
-          billboard.StudsOffset = Vector3.new(0, 3, 0)
-          billboard.AlwaysOnTop = true  -- Ник всегда виден сквозь стены
- 
-          local textLabel = Instance.new("TextLabel")
-          textLabel.Parent = billboard
-          textLabel.Size = UDim2.new(1, 0, 1, 0)
-          textLabel.Text = targetPlayer.Name
-          textLabel.TextColor3 = Color3.fromRGB(255, 165, 0)  -- Оранжевый цвет
-          textLabel.TextStrokeTransparency = 0.5
-          textLabel.TextSize = 16
-          textLabel.BackgroundTransparency = 1  -- Прозрачный фон
- 
-          -- Сохраняем линию и BillboardGui
-          table.insert(playerLines, {line, billboard})
-       end
- 
-       -- Асинхронное обновление
-       task.spawn(function()
-          while true do
-             if Value then  -- Если тумблер включен
-                if not playerRunning then
-                   playerRunning = true
-                   for _, targetPlayer in pairs(game.Players:GetPlayers()) do
-                      if targetPlayer ~= game.Players.LocalPlayer then
-                         createLineAndNameToPlayer(targetPlayer)
-                      end
-                   end
- 
-                   while Value do
-                      wait(1)  -- Проверяем раз в секунду
-                   end
-                   playerRunning = false
-                end
-             else
-                -- Когда тумблер выключен, удаляем все линии и BillboardGui
-                for _, data in ipairs(playerLines) do
-                   data[1]:Destroy()  -- Линия
-                   data[2]:Destroy()  -- Никнейм
-                end
-                playerLines = {}
-                break  -- Выход из асинхронной функции, чтобы больше не выполнять код
-             end
-             wait(1)  -- Пауза между итерациями
-          end
-       end)
-    end,
- })
- 
- local PlayerTab = Window:CreateTab("Target")
+      local function createLineAndNameToPlayer(targetPlayer)
+         local character = targetPlayer.Character
+         if not character then return end
 
- local TweenService = game:GetService("TweenService")
+
+         local targetPart = character:WaitForChild("HumanoidRootPart")
+         local line = Instance.new("Beam")
+         line.Parent = game.Workspace
+         local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
+         local attachment2 = Instance.new("Attachment", targetPart)
+         attachment1.Position = Vector3.new(0, 1, 0)
+         attachment2.Position = Vector3.new(0, 1, 0)
+         line.Attachment0 = attachment1
+         line.Attachment1 = attachment2
+         line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))  
+         line.Width0 = 0.2
+         line.Width1 = 0.2
+
+
+         local billboard = Instance.new("BillboardGui")
+         billboard.Parent = targetPart
+         billboard.Adornee = targetPart
+         billboard.Size = UDim2.new(0, 100, 0, 50)
+         billboard.StudsOffset = Vector3.new(0, 3, 0)
+         billboard.AlwaysOnTop = true  
+
+         local textLabel = Instance.new("TextLabel")
+         textLabel.Parent = billboard
+         textLabel.Size = UDim2.new(1, 0, 1, 0)
+         textLabel.Text = targetPlayer.Name
+         textLabel.TextColor3 = Color3.fromRGB(255, 165, 0) 
+         textLabel.TextStrokeTransparency = 0.5
+         textLabel.TextSize = 16
+         textLabel.BackgroundTransparency = 1  
+
+
+         table.insert(playerLines, {line, billboard})
+      end
+
+
+      task.spawn(function()
+         while true do
+            if Value then  
+               if not playerRunning then
+                  playerRunning = true
+                  for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+                     if targetPlayer ~= game.Players.LocalPlayer then
+                        createLineAndNameToPlayer(targetPlayer)
+                     end
+                  end
+
+                  while Value do
+                     wait(1)  
+                  end
+                  playerRunning = false
+               end
+            else
+               
+               for _, data in ipairs(playerLines) do
+                  data[1]:Destroy()  
+                  data[2]:Destroy()  
+               end
+               playerLines = {}
+               break  
+            end
+            wait(1) 
+         end
+      end)
+   end,
+})
+
+ 
+local PlayerTab = Window:CreateTab("Target")
+
+local TweenService = game:GetService("TweenService")
 local targetPlayerName = ""
 local previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
 
@@ -314,12 +271,11 @@ local Input = PlayerTab:CreateInput({
     Flag = "TargetNameInput",
     Callback = function(Text)
         targetPlayerName = Text
-        print("Target player set to: " .. targetPlayerName)
     end,
 })
 
 local AutoAimToggle = PlayerTab:CreateToggle({
-   Name = "Camera Target Lock",
+   Name = "Auto Aim",
    CurrentValue = false,
    Flag = "AutoAimToggle",
    Callback = function(Value)
@@ -332,21 +288,15 @@ local AutoAimToggle = PlayerTab:CreateToggle({
                    if targetPart then
                        local camera = workspace.CurrentCamera
                        local direction = (targetPart.Position - camera.CFrame.Position).unit
-                       
-                       -- Используем плавную интерполяцию для движения камеры
-                       local targetCFrame = CFrame.lookAt(camera.CFrame.Position, targetPart.Position)
-                       local smoothCFrame = camera.CFrame:Lerp(targetCFrame, 0.1) -- Можно настроить скорость плавности
-
-                       -- Применяем новый CFrame
-                       camera.CFrame = smoothCFrame
+                       local newCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
+                       camera.CFrame = newCFrame
                    end
                end
-               wait(0.01) -- Более частое обновление (усилит реакцию)
+               wait(0.02)
            end
        end)
    end,
 })
-
 
 local distanceAroundTarget = 10  
 local stayDurationNearTarget = 3  
@@ -361,11 +311,9 @@ local DistanceSlider = PlayerTab:CreateSlider({
     Flag = "DistanceSlider",
     Callback = function(Value)
         distanceAroundTarget = Value
-        print("Distance set to: " .. distanceAroundTarget)
     end,
 })
 
--- Исправим работу слайдера StayTimeSlider
 local StayTimeSlider = PlayerTab:CreateSlider({
     Name = "Stay Duration Near Target",
     Range = {1, 50},
@@ -375,7 +323,6 @@ local StayTimeSlider = PlayerTab:CreateSlider({
     Flag = "StayTimeSlider",
     Callback = function(Value)
         stayDurationNearTarget = Value
-        print("Stay duration set to: " .. stayDurationNearTarget)
     end,
 })
 
@@ -388,7 +335,6 @@ local BackTimeSlider = PlayerTab:CreateSlider({
     Flag = "BackTimeSlider",
     Callback = function(Value)
         backDuration = Value
-        print("Back duration set to: " .. backDuration)
     end,
 })
 
@@ -401,7 +347,6 @@ local ToggleMove = PlayerTab:CreateToggle({
     Callback = function(Value)
         if Value then
             startMoving = true
-            print("Movement started")
 
             task.spawn(function()
                 while startMoving do
@@ -412,21 +357,16 @@ local ToggleMove = PlayerTab:CreateToggle({
                             local humanoidRootPart = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
                             previousPosition = humanoidRootPart.CFrame
 
-                            -- Цикличное движение вокруг цели с случайными точками
                             local angle = math.random() * 2 * math.pi
                             local xOffset = math.cos(angle) * distanceAroundTarget
                             local zOffset = math.sin(angle) * distanceAroundTarget
-                            local movePosition = targetPosition.CFrame * CFrame.new(xOffset, 10, zOffset)  -- Добавляем 10 единиц по оси Y
+                            local movePosition = targetPosition.CFrame * CFrame.new(xOffset, 10, zOffset)
 
-                            -- Моментальное перемещение
                             humanoidRootPart.CFrame = movePosition
-                            print("Moved to: " .. tostring(movePosition))
 
-                            -- Плавное следование за целью с ускорением
                             local targetHumanoid = targetPlayer.Character:FindFirstChild("Humanoid")
                             local lastPosition = targetPosition.Position
 
-                            -- Следуем за таргетом
                             local startTime = tick()
                             while startMoving and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") do
                                 local targetRootPart = targetPlayer.Character.HumanoidRootPart
@@ -436,27 +376,22 @@ local ToggleMove = PlayerTab:CreateToggle({
                                 if moveDistance > 0 then
                                     local direction = (targetPos - humanoidRootPart.Position).unit
                                     local newTargetPos = targetPos + direction * distanceAroundTarget
-                                    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear)  -- Уменьшаем длительность для ускоренного движения
+                                    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear)
                                     local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(newTargetPos.X, newTargetPos.Y + 10, newTargetPos.Z)})
                                     tween:Play()
                                     tween.Completed:Wait()
                                 end
 
                                 lastPosition = targetPos
-                                -- Ожидание перед обновлением позиции
                                 wait(0.1)
                                 
-                                -- Прерывание по времени нахождения рядом
                                 if tick() - startTime > stayDurationNearTarget then
                                     break
                                 end
                             end
 
-                            -- После завершения следования, возвращаем на исходную позицию
                             humanoidRootPart.CFrame = previousPosition
-                            print("Returned to previous position: " .. tostring(previousPosition))
 
-                            -- Ожидание перед следующей итерацией
                             wait(backDuration)
                         else
                             warn("Target's HumanoidRootPart not found!")
@@ -468,109 +403,83 @@ local ToggleMove = PlayerTab:CreateToggle({
             end)
         else
             startMoving = false
-            print("Movement stopped")
         end
     end,
 })
 
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
-    print("Player position saved: " .. tostring(previousPosition))
 end)
-
-
 
 local PlayerTab = Window:CreateTab("AutoClicker")
 
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- Keybind for Auto Clicker
-local AutoClickerActive = false  -- To track if the AutoClicker is active
+local AutoClickerActive = false
 
 local Keybind = PlayerTab:CreateKeybind({
-    Name = "Enter Clicker Keybind",  -- Name of the keybind
-    CurrentKeybind = "Q",  -- The default key is Q, can change as needed
-    HoldToInteract = false,  -- Set to false, the action will trigger on key press
-    Flag = "AutoClickerKeybind",  -- Flag for configuration saving
+    Name = "Enter Clicker Keybind",
+    CurrentKeybind = "Q",
+    HoldToInteract = false,
+    Flag = "AutoClickerKeybind",
     Callback = function(Keybind)
-        -- Toggle Auto Clicker on/off when the keybind is pressed
-        AutoClickerActive = not AutoClickerActive  -- Flip the active state
+        AutoClickerActive = not AutoClickerActive
         if AutoClickerActive then
-            print("Auto Clicker Activated")
-            -- Start the auto-clicker if not already active
             task.spawn(function()
                 while AutoClickerActive do
-                    if not UserInputService:GetFocusedTextBox() then -- Check if no text box is focused
+                    if not UserInputService:GetFocusedTextBox() then
                         local MousePos = game.Players.LocalPlayer:GetMouse().Hit.p
                         local Target = game.Players.LocalPlayer:GetMouse().Target
                         if Target and not Target:IsDescendantOf(game.Players.LocalPlayer.PlayerGui) then
-                            mouse1click() -- Click if the cursor is not over a GUI
+                            mouse1click()
                         end
                     end
-                    wait(0.0000000000000000000000000000000000000000000000000000000000000000001) -- Adjust the speed of clicking here
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         else
-            print("Auto Clicker Deactivated")
         end
     end,
 })
-
-
 
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- Переменная для отслеживания состояния авто-спама клавиши
-local AutoKeySpamActive = false  -- Чтобы отслеживать, активен ли спам
+local AutoKeySpamActive = false
 
--- Переменная для хранения выбранной клавиши для спама
-local KeyToSpam = Enum.KeyCode.T  -- По умолчанию будет клавиша G
+local KeyToSpam = Enum.KeyCode.T
 
--- Создаем кейбинд для выбора клавиши для спама
 local Keybind = PlayerTab:CreateKeybind({
-    Name = "Enter Keybind for Spam",  -- Название кейбинда
-    CurrentKeybind = "T",  -- По умолчанию будет клавиша G
-    HoldToInteract = false,  -- Устанавливаем в false, чтобы активировать при нажатии
-    Flag = "AutoKeySpamKeybind",  -- Флаг для сохранения конфигурации
+    Name = "Enter Keybind for Spam",
+    CurrentKeybind = "T",
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind",
     Callback = function(Keybind)
-        -- Обновляем клавишу для спама на ту, которую выбрал пользователь
-        KeyToSpam = Enum.KeyCode[Keybind] or KeyToSpam  -- Обновляем выбранную клавишу
-        print("Spam key set to: " .. KeyToSpam.Name)  -- Выводим информацию о выбранной клавише
+        KeyToSpam = Enum.KeyCode[Keybind] or KeyToSpam
     end,
 })
 
--- Создаем кейбинд для активации спама
 local SpamKeybind = PlayerTab:CreateKeybind({
-    Name = "Activate Key Spam",  -- Название кейбинда для активации спама
-    CurrentKeybind = "H",  -- По умолчанию будет клавиша H для активации
-    HoldToInteract = false,  -- Устанавливаем в false, чтобы активировать при нажатии
-    Flag = "AutoKeySpamActivateKeybind",  -- Флаг для сохранения конфигурации
+    Name = "Activate Key Spam",
+    CurrentKeybind = "H",
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind",
     Callback = function(Keybind)
-        -- Переключаем активность спама клавиши
-        AutoKeySpamActive = not AutoKeySpamActive  -- Переворачиваем состояние
+        AutoKeySpamActive = not AutoKeySpamActive
         if AutoKeySpamActive then
-            print("Key Spam Activated")
-            -- Запускаем спам выбранной клавишей
             task.spawn(function()
                 while AutoKeySpamActive do
-                    -- Спамим выбранной клавишей
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, KeyToSpam, false, game)
-                    wait(0.000000000000000000000000000000000000000000000000000000000000000000001)  -- Задержка между нажатиями (можно настроить по вашему усмотрению)
+                    wait(0.000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         else
-            print("Key Spam Deactivated")
         end
     end,
 })
 
-
-
-
 local PlayerTab = Window:CreateTab("Teleports")
-
 
 local Button = PlayerTab:CreateButton({
    Name = "Teleport to Church",
@@ -585,11 +494,9 @@ local Button = PlayerTab:CreateButton({
        if targetPart then
            humanoidRootPart.CFrame = targetPart.CFrame
        else
-           warn("not found!")
        end
    end,
 })
-
 
 local Button = PlayerTab:CreateButton({
    Name = "Teleport to Fountain",
@@ -604,7 +511,6 @@ local Button = PlayerTab:CreateButton({
        if targetPart then
            humanoidRootPart.CFrame = targetPart.CFrame
        else
-           warn("not found!")
        end
    end,
 })
@@ -622,11 +528,9 @@ local Button = PlayerTab:CreateButton({
        if targetPart then
            humanoidRootPart.CFrame = targetPart.CFrame
        else
-           warn("not found!")
        end
    end,
 })
-
 
 local Button = PlayerTab:CreateButton({
    Name = "Teleport to Bellatrix Lestrange",
@@ -641,11 +545,9 @@ local Button = PlayerTab:CreateButton({
        if targetPart then
            humanoidRootPart.CFrame = targetPart.CFrame
        else
-           warn("not found!")
        end
    end,
 })
-
 
 local Button = PlayerTab:CreateButton({
    Name = "Teleport to Allison Argent",
@@ -660,7 +562,6 @@ local Button = PlayerTab:CreateButton({
        if targetPart then
            humanoidRootPart.CFrame = targetPart.CFrame
        else
-           warn("not found!")
        end
    end,
 })
