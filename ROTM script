@@ -446,35 +446,98 @@ local Keybind = PlayerTab:CreateKeybind({
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-local AutoKeySpamActive = false
-local KeyToSpam = Enum.KeyCode.T 
+-- 3 кнопки для выбора клавиш, которые будут спамиться
 
-
-local Keybind = PlayerTab:CreateKeybind({
-    Name = "Enter Keybind for Spam",
+-- Кнопка 1 для выбора клавиши для спама
+local Keybind1 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 1",
     CurrentKeybind = "T",  
     HoldToInteract = false,
-    Flag = "AutoKeySpamKeybind",
+    Flag = "AutoKeySpamKeybind1",
     Callback = function(Keybind)
+        -- Функция для установки клавиши для спама (если нужно, можно что-то добавить)
+    end,
+})
 
+local SpamKeybind1 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 1",
+    CurrentKeybind = "H",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind1",
+    Callback = function(Keybind)
+        AutoKeySpamActive1 = not AutoKeySpamActive1
+        if AutoKeySpamActive1 then
+            task.spawn(function()
+                while AutoKeySpamActive1 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.01)  -- Пауза между нажатиями
+                end
+            end)
+        end
+    end,
+})
+
+-- Кнопка 2 для выбора клавиши для спама
+local Keybind2 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 1",
+    CurrentKeybind = "Y",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind2",
+    Callback = function(Keybind)
+        -- Функция для установки клавиши для спама (если нужно, можно что-то добавить)
+    end,
+})
+
+-- Кнопка 2 для активации спама для второй клавиши
+local SpamKeybind2 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 2",
+    CurrentKeybind = "J",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind2",
+    Callback = function(Keybind)
+        AutoKeySpamActive2 = not AutoKeySpamActive2
+        if AutoKeySpamActive2 then
+            task.spawn(function()
+                while AutoKeySpamActive2 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.01)  -- Пауза между нажатиями
+                end
+            end)
+        end
+    end,
+})
+
+-- Кнопка 3 для выбора клавиши для спама
+local Keybind3 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 3",
+    CurrentKeybind = "U",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind3",
+    Callback = function(Keybind)
+        -- Функция для установки клавиши для спама (если нужно, можно что-то добавить)
     end,
 })
 
 
-local SpamKeybind = PlayerTab:CreateKeybind({
-    Name = "Activate Key Spam",
-    CurrentKeybind = "H",  
+
+
+
+-- Кнопка 3 для активации спама для третьей клавиши
+local SpamKeybind3 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 3",
+    CurrentKeybind = "K",  
     HoldToInteract = false,
-    Flag = "AutoKeySpamActivateKeybind",
+    Flag = "AutoKeySpamActivateKeybind3",
     Callback = function(Keybind)
-        AutoKeySpamActive = not AutoKeySpamActive
-        if AutoKeySpamActive then
+        AutoKeySpamActive3 = not AutoKeySpamActive3
+        if AutoKeySpamActive3 then
             task.spawn(function()
-                while AutoKeySpamActive do
-                    
-                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind"].CurrentKeybind
+                while AutoKeySpamActive3 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.00000000000000000000000000000000000000000000000000000000000000000001)  
+                    wait(0.01)  -- Пауза между нажатиями
                 end
             end)
         end
