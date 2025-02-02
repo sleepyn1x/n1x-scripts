@@ -447,22 +447,23 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local AutoKeySpamActive = false
+local KeyToSpam = Enum.KeyCode.T 
 
-local KeyToSpam = Enum.KeyCode.T
 
 local Keybind = PlayerTab:CreateKeybind({
     Name = "Enter Keybind for Spam",
-    CurrentKeybind = "T",
+    CurrentKeybind = "T",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind",
     Callback = function(Keybind)
-        KeyToSpam = Enum.KeyCode[Keybind] or KeyToSpam
+
     end,
 })
 
+
 local SpamKeybind = PlayerTab:CreateKeybind({
     Name = "Activate Key Spam",
-    CurrentKeybind = "H",
+    CurrentKeybind = "H",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind",
     Callback = function(Keybind)
@@ -470,14 +471,17 @@ local SpamKeybind = PlayerTab:CreateKeybind({
         if AutoKeySpamActive then
             task.spawn(function()
                 while AutoKeySpamActive do
-                    game:GetService("VirtualInputManager"):SendKeyEvent(true, KeyToSpam, false, game)
-                    wait(0.000000000000000000000000000000000000000000000000000000000000000000001)
+                    
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000000001)  
                 end
             end)
-        else
         end
     end,
 })
+
+
 
 local PlayerTab = Window:CreateTab("Teleports")
 
