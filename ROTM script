@@ -446,98 +446,172 @@ local Keybind = PlayerTab:CreateKeybind({
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- 3 кнопки для выбора клавиш, которые будут спамиться
+local Player = game.Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Кнопка 1 для выбора клавиши для спама
+-- Создаём ScreenGui для индикаторов
+local IndicatorGui = Instance.new("ScreenGui")
+IndicatorGui.Name = "KeybindIndicators"
+IndicatorGui.Parent = PlayerGui
+
+-- Функция для создания индикатора
+local function createIndicator(keyText, index)
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 20, 0, 20)  -- Маленький круг
+    indicator.Position = UDim2.new(1, -30 - (index - 1) * 30, 1, -30) -- Подогнанное позиционирование
+    indicator.AnchorPoint = Vector2.new(1, 1)
+    indicator.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Чёрный круг
+    indicator.BackgroundTransparency = 0
+    indicator.BorderSizePixel = 0
+    indicator.Parent = IndicatorGui
+
+    -- Делаем круглый индикатор
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = indicator
+
+    -- Создаём эффект отверстия (через Stroke)
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 3  -- Толщина границы (создаёт эффект отверстия)
+    stroke.Color = Color3.fromRGB(0, 0, 0) -- Чёрная граница
+    stroke.Parent = indicator
+
+    -- Вставляем текст (забинденный кейбинд)
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = keyText
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Белый текст
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextScaled = true
+    textLabel.Parent = indicator
+
+    return indicator
+end
+
+-- Хранение индикаторов
+local indicators = {}
+
+-- Функция обновления индикаторов
+local function updateIndicators()
+    -- Удаляем старые индикаторы
+    for _, indicator in pairs(indicators) do
+        indicator:Destroy()
+    end
+    indicators = {}
+
+    -- Создаём новые индикаторы для активных кейбиндов
+    local activeKeys = {}
+
+    if AutoKeySpamActive1 then 
+        table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind)
+    end
+    if AutoKeySpamActive2 then 
+        table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind)
+    end
+    if AutoKeySpamActive3 then 
+        table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind)
+    end
+
+    for i, keyText in ipairs(activeKeys) do
+        local indicator = createIndicator(keyText, i)
+        indicators[keyText] = indicator
+    end
+end
+
+-- Функция для обновления индикаторов каждые 0.1 секунды (чтобы отлавливать смену биндов)
+task.spawn(function()
+    while true do
+        updateIndicators()
+        wait(0.1)  -- Обновление каждые 0.1 сек
+    end
+end)
+
+-- Кейбинды
 local Keybind1 = PlayerTab:CreateKeybind({
-    Name = "KEYBIND TO SPAM 1",
+    Name = "Enter AutoClicker Keybind 1",
     CurrentKeybind = "T",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind1",
-    Callback = function(Keybind)
-        -- Функция для установки клавиши для спама (если нужно, можно что-то добавить)
+    Callback = function(Keybind) 
+        updateIndicators()
     end,
 })
 
 local SpamKeybind1 = PlayerTab:CreateKeybind({
-    Name = "Activate Keybind 1",
+    Name = "Follow Target (ENTER TARGET NAME) 1",
     CurrentKeybind = "H",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind1",
     Callback = function(Keybind)
         AutoKeySpamActive1 = not AutoKeySpamActive1
+        updateIndicators()
         if AutoKeySpamActive1 then
             task.spawn(function()
                 while AutoKeySpamActive1 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.01)  -- Пауза между нажатиями
+                    wait(0.01)  
                 end
             end)
         end
     end,
 })
 
--- Кнопка 2 для выбора клавиши для спама
 local Keybind2 = PlayerTab:CreateKeybind({
-    Name = "KEYBIND TO SPAM 1",
+    Name = "Enter AutoClicker Keybind 2",
     CurrentKeybind = "Y",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind2",
-    Callback = function(Keybind)
-        -- Функция для установки клавиши для спама (если нужно, можно что-то добавить)
+    Callback = function(Keybind) 
+        updateIndicators()
     end,
 })
 
--- Кнопка 2 для активации спама для второй клавиши
 local SpamKeybind2 = PlayerTab:CreateKeybind({
-    Name = "Activate Keybind 2",
+    Name = "Follow Target (ENTER TARGET NAME) 2",
     CurrentKeybind = "J",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind2",
     Callback = function(Keybind)
         AutoKeySpamActive2 = not AutoKeySpamActive2
+        updateIndicators()
         if AutoKeySpamActive2 then
             task.spawn(function()
                 while AutoKeySpamActive2 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.01)  -- Пауза между нажатиями
+                    wait(0.01)  
                 end
             end)
         end
     end,
 })
 
--- Кнопка 3 для выбора клавиши для спама
 local Keybind3 = PlayerTab:CreateKeybind({
-    Name = "KEYBIND TO SPAM 3",
+    Name = "Enter AutoClicker Keybind 3",
     CurrentKeybind = "U",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind3",
-    Callback = function(Keybind)
-        -- Функция для установки клавиши для спама (если нужно, можно что-то добавить)
+    Callback = function(Keybind) 
+        updateIndicators()
     end,
 })
 
-
-
-
-
--- Кнопка 3 для активации спама для третьей клавиши
 local SpamKeybind3 = PlayerTab:CreateKeybind({
-    Name = "Activate Keybind 3",
+    Name = "Follow Target (ENTER TARGET NAME) 3",
     CurrentKeybind = "K",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind3",
     Callback = function(Keybind)
         AutoKeySpamActive3 = not AutoKeySpamActive3
+        updateIndicators()
         if AutoKeySpamActive3 then
             task.spawn(function()
                 while AutoKeySpamActive3 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.01)  -- Пауза между нажатиями
+                    wait(0.01)  
                 end
             end)
         end
