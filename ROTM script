@@ -412,11 +412,84 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 local PlayerTab = Window:CreateTab("AutoClicker")
-
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-
+local Player = game.Players.LocalPlayer
 local AutoClickerActive = false
+local AutoKeySpamActive1, AutoKeySpamActive2, AutoKeySpamActive3 = false, false, false
+
+-- Функция создания GUI (чтобы пересоздавать после смерти)
+local function createIndicatorGui()
+    if Player:FindFirstChild("PlayerGui") then
+        if Player.PlayerGui:FindFirstChild("KeybindIndicators") then
+            Player.PlayerGui.KeybindIndicators:Destroy()
+        end
+        local IndicatorGui = Instance.new("ScreenGui")
+        IndicatorGui.Name = "KeybindIndicators"
+        IndicatorGui.Parent = Player.PlayerGui
+        return IndicatorGui
+    end
+end
+
+local IndicatorGui = createIndicatorGui()
+local indicators = {}
+
+local function createIndicator(keyText, index)
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 25, 0, 25)
+    indicator.Position = UDim2.new(1, -30 - (index - 1) * 35, 1, -60)
+    indicator.AnchorPoint = Vector2.new(1, 1)
+    indicator.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    indicator.BorderSizePixel = 0
+    indicator.Parent = IndicatorGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = indicator
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 3
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Parent = indicator
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = keyText
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextScaled = true
+    textLabel.Parent = indicator
+
+    return indicator
+end
+
+local function updateIndicators()
+    for _, indicator in pairs(indicators) do
+        indicator:Destroy()
+    end
+    indicators = {}
+    
+    local activeKeys = {}
+    if AutoClickerActive then table.insert(activeKeys, "AC") end
+    if AutoKeySpamActive1 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind) end
+    if AutoKeySpamActive2 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind) end
+    if AutoKeySpamActive3 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind) end
+    if AutoKeySpamActive4 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind4"].CurrentKeybind) end
+
+    for i, keyText in ipairs(activeKeys) do
+        indicators[keyText] = createIndicator(keyText, i)
+    end
+end
+
+RunService.Heartbeat:Connect(updateIndicators)
+
+-- Восстановление GUI после смерти
+Player.CharacterAdded:Connect(function()
+    task.wait(1)
+    IndicatorGui = createIndicatorGui()
+    updateIndicators()
+end)
 
 local Keybind = PlayerTab:CreateKeybind({
     Name = "Enter AutoClicker Keybind",
@@ -425,6 +498,7 @@ local Keybind = PlayerTab:CreateKeybind({
     Flag = "AutoClickerKeybind",
     Callback = function(Keybind)
         AutoClickerActive = not AutoClickerActive
+        updateIndicators()
         if AutoClickerActive then
             task.spawn(function()
                 while AutoClickerActive do
@@ -435,101 +509,18 @@ local Keybind = PlayerTab:CreateKeybind({
                             mouse1click()
                         end
                     end
-                    wait(0.0000000000000000000000000000000000000000000000000000000000000000001)
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
-        else
         end
     end,
 })
 
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
-local Player = game.Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
-
--- Создаём ScreenGui для индикаторов
-local IndicatorGui = Instance.new("ScreenGui")
-IndicatorGui.Name = "KeybindIndicators"
-IndicatorGui.Parent = PlayerGui
-
--- Функция для создания индикатора
-local function createIndicator(keyText, index)
-    local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(0, 20, 0, 20)  -- Маленький круг
-    indicator.Position = UDim2.new(1, -30 - (index - 1) * 30, 1, -30) -- Подогнанное позиционирование
-    indicator.AnchorPoint = Vector2.new(1, 1)
-    indicator.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Чёрный круг
-    indicator.BackgroundTransparency = 0
-    indicator.BorderSizePixel = 0
-    indicator.Parent = IndicatorGui
-
-    -- Делаем круглый индикатор
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(1, 0)
-    corner.Parent = indicator
-
-    -- Создаём эффект отверстия (через Stroke)
-    local stroke = Instance.new("UIStroke")
-    stroke.Thickness = 3  -- Толщина границы (создаёт эффект отверстия)
-    stroke.Color = Color3.fromRGB(0, 0, 0) -- Чёрная граница
-    stroke.Parent = indicator
-
-    -- Вставляем текст (забинденный кейбинд)
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = keyText
-    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- Белый текст
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextScaled = true
-    textLabel.Parent = indicator
-
-    return indicator
-end
-
--- Хранение индикаторов
-local indicators = {}
-
--- Функция обновления индикаторов
-local function updateIndicators()
-    -- Удаляем старые индикаторы
-    for _, indicator in pairs(indicators) do
-        indicator:Destroy()
-    end
-    indicators = {}
-
-    -- Создаём новые индикаторы для активных кейбиндов
-    local activeKeys = {}
-
-    if AutoKeySpamActive1 then 
-        table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind)
-    end
-    if AutoKeySpamActive2 then 
-        table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind)
-    end
-    if AutoKeySpamActive3 then 
-        table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind)
-    end
-
-    for i, keyText in ipairs(activeKeys) do
-        local indicator = createIndicator(keyText, i)
-        indicators[keyText] = indicator
-    end
-end
-
--- Функция для обновления индикаторов каждые 0.1 секунды (чтобы отлавливать смену биндов)
-task.spawn(function()
-    while true do
-        updateIndicators()
-        wait(0.1)  -- Обновление каждые 0.1 сек
-    end
-end)
 
 -- Кейбинды
 local Keybind1 = PlayerTab:CreateKeybind({
-    Name = "Enter AutoClicker Keybind 1",
+    Name = "KEYBIND TO SPAM 2",
     CurrentKeybind = "T",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind1",
@@ -539,7 +530,7 @@ local Keybind1 = PlayerTab:CreateKeybind({
 })
 
 local SpamKeybind1 = PlayerTab:CreateKeybind({
-    Name = "Follow Target (ENTER TARGET NAME) 1",
+    Name = "Activate Keybind 1",
     CurrentKeybind = "H",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind1",
@@ -551,7 +542,7 @@ local SpamKeybind1 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive1 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.01)  
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
@@ -559,7 +550,7 @@ local SpamKeybind1 = PlayerTab:CreateKeybind({
 })
 
 local Keybind2 = PlayerTab:CreateKeybind({
-    Name = "Enter AutoClicker Keybind 2",
+    Name = "KEYBIND TO SPAM 2",
     CurrentKeybind = "Y",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind2",
@@ -569,7 +560,7 @@ local Keybind2 = PlayerTab:CreateKeybind({
 })
 
 local SpamKeybind2 = PlayerTab:CreateKeybind({
-    Name = "Follow Target (ENTER TARGET NAME) 2",
+    Name = "Activate Keybind 2",
     CurrentKeybind = "J",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind2",
@@ -581,7 +572,7 @@ local SpamKeybind2 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive2 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.01)  
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
@@ -589,7 +580,7 @@ local SpamKeybind2 = PlayerTab:CreateKeybind({
 })
 
 local Keybind3 = PlayerTab:CreateKeybind({
-    Name = "Enter AutoClicker Keybind 3",
+    Name = "KEYBIND TO SPAM 3",
     CurrentKeybind = "U",  
     HoldToInteract = false,
     Flag = "AutoKeySpamKeybind3",
@@ -599,7 +590,7 @@ local Keybind3 = PlayerTab:CreateKeybind({
 })
 
 local SpamKeybind3 = PlayerTab:CreateKeybind({
-    Name = "Follow Target (ENTER TARGET NAME) 3",
+    Name = "Activate Keybind 3",
     CurrentKeybind = "K",  
     HoldToInteract = false,
     Flag = "AutoKeySpamActivateKeybind3",
@@ -611,13 +602,44 @@ local SpamKeybind3 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive3 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.01)  
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
     end,
 })
 
+
+
+local Keybind3 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 4",
+    CurrentKeybind = "L",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind4",
+    Callback = function(Keybind) 
+        updateIndicators()
+    end,
+})
+
+local SpamKeybind3 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 4",
+    CurrentKeybind = "L",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind4",
+    Callback = function(Keybind)
+        AutoKeySpamActive3 = not AutoKeySpamActive3
+        updateIndicators()
+        if AutoKeySpamActive3 then
+            task.spawn(function()
+                while AutoKeySpamActive3 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind4"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)
+                end
+            end)
+        end
+    end,
+})
 
 
 local PlayerTab = Window:CreateTab("Teleports")
