@@ -1,0 +1,730 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+if not Rayfield then
+    warn("Rayfield module failed to load.")
+end
+
+local Window = Rayfield:CreateWindow({
+    Name = "sleepyn1x ROTM",
+    Icon = 0,
+    LoadingTitle = "ROTM Script",
+    LoadingSubtitle = "by sleepyn1x",
+    Theme = "Default",
+    DisableRayfieldPrompts = false,
+    DisableBuildWarnings = false,
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil,
+       FileName = "Big Hub"
+    },
+    Discord = {
+       Enabled = false,
+       Invite = "noinvitelink",
+       RememberJoins = true
+    },
+    KeySystem = false,
+    KeySettings = {
+       Title = "Untitled",
+       Subtitle = "Key System",
+       Note = "No method of obtaining the key is provided",
+       FileName = "Key",
+       SaveKey = true,
+       GrabKeyFromSite = false,
+       Key = {"Hello"}
+    }
+})
+
+local PlayerTab = Window:CreateTab("Player", 4483362458)
+
+local Toggle = PlayerTab:CreateToggle({
+    Name = "AutoFarm",
+    CurrentValue = false,
+    Flag = "FarmToggle",
+    Callback = function(Value)
+       local targetPartName = "MeshPart"
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+       local isActivatingPrompt = false  
+ 
+       local function teleportAndActivatePrompt(targetPart)
+          humanoidRootPart.CFrame = targetPart.CFrame
+          local proximityPrompt = targetPart:FindFirstChildOfClass("ProximityPrompt")
+          if proximityPrompt and proximityPrompt.Enabled and not isActivatingPrompt then
+             isActivatingPrompt = true  
+             fireproximityprompt(proximityPrompt)
+             isActivatingPrompt = false
+          end
+       end
+ 
+       task.spawn(function()
+          while Value do
+             local debris = workspace:FindFirstChild("Debris")
+             if debris then
+                local targetPart = debris:FindFirstChild(targetPartName)
+                if targetPart then
+                   teleportAndActivatePrompt(targetPart)
+                end
+             end
+             wait(1)
+          end
+       end)
+    end,
+ })
+ 
+local WalkSpeedSlider = PlayerTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {10, 100},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 10,
+    Flag = "Slider1",
+    Callback = function(Value)
+        local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+        humanoid.WalkSpeed = Value
+    end,
+})
+
+local JumpPowerSlider = PlayerTab:CreateSlider({
+    Name = "JumpPower",
+    Range = {10, 500},
+    Increment = 1,
+    Suffix = "Power",
+    CurrentValue = 10,
+    Flag = "Slider2",
+    Callback = function(Value)
+        local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+        humanoid.JumpPower = Value
+    end,
+})
+
+local ToggleChests = PlayerTab:CreateToggle({
+    Name = "Show Chest",
+    CurrentValue = false,  
+    Flag = "ChestLineBoxToggle",
+    Callback = function(Value)
+       local chestLine = nil
+       local chestBox = nil
+       local chestRunning = false
+
+       local function createLineAndBoxToChest(chestPart)
+          if chestLine then
+             chestLine:Destroy()
+          end
+          if chestBox then
+             chestBox:Destroy()
+          end
+
+          chestLine = Instance.new("Beam")
+          chestLine.Parent = game.Workspace
+          local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
+          local attachment2 = Instance.new("Attachment", chestPart)
+          attachment1.Position = Vector3.new(0, 1, 0)
+          attachment2.Position = Vector3.new(0, 1, 0)
+          chestLine.Attachment0 = attachment1
+          chestLine.Attachment1 = attachment2
+          chestLine.Color = ColorSequence.new(Color3.fromRGB(255, 105, 180))
+          chestLine.Width0 = 0.2
+          chestLine.Width1 = 0.2
+
+          chestBox = Instance.new("BoxHandleAdornment")
+          chestBox.Parent = chestPart
+          chestBox.Size = chestPart.Size + Vector3.new(0.5, 0.5, 0.5)
+          chestBox.Adornee = chestPart
+          chestBox.Color3 = Color3.fromRGB(255, 105, 180)
+          chestBox.Transparency = 0.5
+          chestBox.ZIndex = 5
+          chestBox.AlwaysOnTop = true
+       end
+
+       task.spawn(function()
+          while true do
+             if Value then
+                if not chestRunning then
+                   chestRunning = true
+                   local debris = workspace:FindFirstChild("Debris")
+                   if debris then
+                      for _, part in pairs(debris:GetChildren()) do
+                         if part:IsA("MeshPart") then
+                            local targetPart = part:FindFirstChild("Body")
+                            if targetPart then
+                               createLineAndBoxToChest(targetPart)
+                            end
+                         end
+                      end
+                   end
+                   while Value do
+                      wait(1)
+                   end
+                   chestRunning = false
+                end
+             else
+                if chestLine then
+                   chestLine:Destroy()
+                   chestLine = nil
+                end
+                if chestBox then
+                   chestBox:Destroy()
+                   chestBox = nil
+                end
+                break
+             end
+             wait(1)
+          end
+       end)
+    end,
+})
+
+
+
+local TogglePlayers = PlayerTab:CreateToggle({
+   Name = "Show Player",
+   CurrentValue = false,  
+   Flag = "PlayerLineToggle",
+   Callback = function(Value)
+      local playerLines = {}
+      local playerRunning = false
+
+
+      local function createLineAndNameToPlayer(targetPlayer)
+         local character = targetPlayer.Character
+         if not character then return end
+
+
+         local targetPart = character:WaitForChild("HumanoidRootPart")
+         local line = Instance.new("Beam")
+         line.Parent = game.Workspace
+         local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
+         local attachment2 = Instance.new("Attachment", targetPart)
+         attachment1.Position = Vector3.new(0, 1, 0)
+         attachment2.Position = Vector3.new(0, 1, 0)
+         line.Attachment0 = attachment1
+         line.Attachment1 = attachment2
+         line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))  
+         line.Width0 = 0.2
+         line.Width1 = 0.2
+
+
+         local billboard = Instance.new("BillboardGui")
+         billboard.Parent = targetPart
+         billboard.Adornee = targetPart
+         billboard.Size = UDim2.new(0, 100, 0, 50)
+         billboard.StudsOffset = Vector3.new(0, 3, 0)
+         billboard.AlwaysOnTop = true  
+
+         local textLabel = Instance.new("TextLabel")
+         textLabel.Parent = billboard
+         textLabel.Size = UDim2.new(1, 0, 1, 0)
+         textLabel.Text = targetPlayer.Name
+         textLabel.TextColor3 = Color3.fromRGB(255, 165, 0) 
+         textLabel.TextStrokeTransparency = 0.5
+         textLabel.TextSize = 16
+         textLabel.BackgroundTransparency = 1  
+
+
+         table.insert(playerLines, {line, billboard})
+      end
+
+
+      task.spawn(function()
+         while true do
+            if Value then  
+               if not playerRunning then
+                  playerRunning = true
+                  for _, targetPlayer in pairs(game.Players:GetPlayers()) do
+                     if targetPlayer ~= game.Players.LocalPlayer then
+                        createLineAndNameToPlayer(targetPlayer)
+                     end
+                  end
+
+                  while Value do
+                     wait(1)  
+                  end
+                  playerRunning = false
+               end
+            else
+               
+               for _, data in ipairs(playerLines) do
+                  data[1]:Destroy()  
+                  data[2]:Destroy()  
+               end
+               playerLines = {}
+               break  
+            end
+            wait(1) 
+         end
+      end)
+   end,
+})
+
+ 
+local PlayerTab = Window:CreateTab("Target")
+
+local TweenService = game:GetService("TweenService")
+local targetPlayerName = ""
+local previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
+
+local Input = PlayerTab:CreateInput({
+    Name = "Enter Target Player Name",
+    CurrentValue = "",
+    PlaceholderText = "Enter target player's name",
+    RemoveTextAfterFocusLost = false,
+    Flag = "TargetNameInput",
+    Callback = function(Text)
+        targetPlayerName = Text
+    end,
+})
+
+local AutoAimToggle = PlayerTab:CreateToggle({
+   Name = "Auto Aim",
+   CurrentValue = false,
+   Flag = "AutoAimToggle",
+   Callback = function(Value)
+       getgenv().AutoAim = Value
+       task.spawn(function()
+           while getgenv().AutoAim do
+               local targetPlayer = game.Players:FindFirstChild(targetPlayerName)
+               if targetPlayer and targetPlayer.Character then
+                   local targetPart = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                   if targetPart then
+                       local camera = workspace.CurrentCamera
+                       local direction = (targetPart.Position - camera.CFrame.Position).unit
+                       local newCFrame = CFrame.lookAt(camera.CFrame.Position, camera.CFrame.Position + direction)
+                       camera.CFrame = newCFrame
+                   end
+               end
+               wait(0.02)
+           end
+       end)
+   end,
+})
+
+local distanceAroundTarget = 10  
+local stayDurationNearTarget = 3  
+local backDuration = 2  
+
+local DistanceSlider = PlayerTab:CreateSlider({
+    Name = "Distance Around Target",
+    Range = {1, 50},
+    Increment = 1,
+    Suffix = "Studs",
+    CurrentValue = distanceAroundTarget,
+    Flag = "DistanceSlider",
+    Callback = function(Value)
+        distanceAroundTarget = Value
+    end,
+})
+
+local StayTimeSlider = PlayerTab:CreateSlider({
+    Name = "Stay Duration Near Target",
+    Range = {1, 50},
+    Increment = 1,
+    Suffix = "Seconds",
+    CurrentValue = stayDurationNearTarget,
+    Flag = "StayTimeSlider",
+    Callback = function(Value)
+        stayDurationNearTarget = Value
+    end,
+})
+
+local BackTimeSlider = PlayerTab:CreateSlider({
+    Name = "Back Duration After Move",
+    Range = {1, 50},
+    Increment = 1,
+    Suffix = "Seconds",
+    CurrentValue = backDuration,
+    Flag = "BackTimeSlider",
+    Callback = function(Value)
+        backDuration = Value
+    end,
+})
+
+local startMoving = false
+
+local ToggleMove = PlayerTab:CreateToggle({
+    Name = "Follow Target (ENTER TARGET NAME)",
+    CurrentValue = false,
+    Flag = "MoveToggle",
+    Callback = function(Value)
+        if Value then
+            startMoving = true
+
+            task.spawn(function()
+                while startMoving do
+                    local targetPlayer = game.Players:FindFirstChild(targetPlayerName)
+                    if targetPlayer and targetPlayer.Character then
+                        local targetPosition = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if targetPosition then
+                            local humanoidRootPart = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+                            previousPosition = humanoidRootPart.CFrame
+
+                            local angle = math.random() * 2 * math.pi
+                            local xOffset = math.cos(angle) * distanceAroundTarget
+                            local zOffset = math.sin(angle) * distanceAroundTarget
+                            local movePosition = targetPosition.CFrame * CFrame.new(xOffset, 10, zOffset)
+
+                            humanoidRootPart.CFrame = movePosition
+
+                            local targetHumanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+                            local lastPosition = targetPosition.Position
+
+                            local startTime = tick()
+                            while startMoving and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") do
+                                local targetRootPart = targetPlayer.Character.HumanoidRootPart
+                                local targetPos = targetRootPart.Position
+                                local moveDistance = (targetPos - lastPosition).Magnitude
+
+                                if moveDistance > 0 then
+                                    local direction = (targetPos - humanoidRootPart.Position).unit
+                                    local newTargetPos = targetPos + direction * distanceAroundTarget
+                                    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Linear)
+                                    local tween = TweenService:Create(humanoidRootPart, tweenInfo, {CFrame = CFrame.new(newTargetPos.X, newTargetPos.Y + 10, newTargetPos.Z)})
+                                    tween:Play()
+                                    tween.Completed:Wait()
+                                end
+
+                                lastPosition = targetPos
+                                wait(0.1)
+                                
+                                if tick() - startTime > stayDurationNearTarget then
+                                    break
+                                end
+                            end
+
+                            humanoidRootPart.CFrame = previousPosition
+
+                            wait(backDuration)
+                        else
+                            warn("Target's HumanoidRootPart not found!")
+                        end
+                    else
+                        warn("Target player not found or missing character!")
+                    end
+                end
+            end)
+        else
+            startMoving = false
+        end
+    end,
+})
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    previousPosition = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame or CFrame.new(0, 0, 0)
+end)
+
+local PlayerTab = Window:CreateTab("AutoClicker")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Player = game.Players.LocalPlayer
+local AutoClickerActive = false
+local AutoKeySpamActive1, AutoKeySpamActive2, AutoKeySpamActive3 = false, false, false
+
+-- Функция создания GUI (чтобы пересоздавать после смерти)
+local function createIndicatorGui()
+    if Player:FindFirstChild("PlayerGui") then
+        if Player.PlayerGui:FindFirstChild("KeybindIndicators") then
+            Player.PlayerGui.KeybindIndicators:Destroy()
+        end
+        local IndicatorGui = Instance.new("ScreenGui")
+        IndicatorGui.Name = "KeybindIndicators"
+        IndicatorGui.Parent = Player.PlayerGui
+        return IndicatorGui
+    end
+end
+
+local IndicatorGui = createIndicatorGui()
+local indicators = {}
+
+local function createIndicator(keyText, index)
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 25, 0, 25)
+    indicator.Position = UDim2.new(1, -30 - (index - 1) * 35, 1, -60)
+    indicator.AnchorPoint = Vector2.new(1, 1)
+    indicator.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    indicator.BorderSizePixel = 0
+    indicator.Parent = IndicatorGui
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = indicator
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = 3
+    stroke.Color = Color3.fromRGB(255, 255, 255)
+    stroke.Parent = indicator
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = keyText
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextScaled = true
+    textLabel.Parent = indicator
+
+    return indicator
+end
+
+local function updateIndicators()
+    for _, indicator in pairs(indicators) do
+        indicator:Destroy()
+    end
+    indicators = {}
+    
+    local activeKeys = {}
+    if AutoClickerActive then table.insert(activeKeys, "AC") end
+    if AutoKeySpamActive1 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind) end
+    if AutoKeySpamActive2 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind) end
+    if AutoKeySpamActive3 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind) end
+    if AutoKeySpamActive4 then table.insert(activeKeys, Rayfield.Flags["AutoKeySpamKeybind4"].CurrentKeybind) end
+
+    for i, keyText in ipairs(activeKeys) do
+        indicators[keyText] = createIndicator(keyText, i)
+    end
+end
+
+RunService.Heartbeat:Connect(updateIndicators)
+
+-- Восстановление GUI после смерти
+Player.CharacterAdded:Connect(function()
+    task.wait(1)
+    IndicatorGui = createIndicatorGui()
+    updateIndicators()
+end)
+
+local Keybind = PlayerTab:CreateKeybind({
+    Name = "Enter AutoClicker Keybind",
+    CurrentKeybind = "Q",
+    HoldToInteract = false,
+    Flag = "AutoClickerKeybind",
+    Callback = function(Keybind)
+        AutoClickerActive = not AutoClickerActive
+        updateIndicators()
+        if AutoClickerActive then
+            task.spawn(function()
+                while AutoClickerActive do
+                    if not UserInputService:GetFocusedTextBox() then
+                        local MousePos = game.Players.LocalPlayer:GetMouse().Hit.p
+                        local Target = game.Players.LocalPlayer:GetMouse().Target
+                        if Target and not Target:IsDescendantOf(game.Players.LocalPlayer.PlayerGui) then
+                            mouse1click()
+                        end
+                    end
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                end
+            end)
+        end
+    end,
+})
+
+
+
+-- Кейбинды
+local Keybind1 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 2",
+    CurrentKeybind = "T",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind1",
+    Callback = function(Keybind) 
+        updateIndicators()
+    end,
+})
+
+local SpamKeybind1 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 1",
+    CurrentKeybind = "H",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind1",
+    Callback = function(Keybind)
+        AutoKeySpamActive1 = not AutoKeySpamActive1
+        updateIndicators()
+        if AutoKeySpamActive1 then
+            task.spawn(function()
+                while AutoKeySpamActive1 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                end
+            end)
+        end
+    end,
+})
+
+local Keybind2 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 2",
+    CurrentKeybind = "Y",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind2",
+    Callback = function(Keybind) 
+        updateIndicators()
+    end,
+})
+
+local SpamKeybind2 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 2",
+    CurrentKeybind = "J",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind2",
+    Callback = function(Keybind)
+        AutoKeySpamActive2 = not AutoKeySpamActive2
+        updateIndicators()
+        if AutoKeySpamActive2 then
+            task.spawn(function()
+                while AutoKeySpamActive2 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                end
+            end)
+        end
+    end,
+})
+
+local Keybind3 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 3",
+    CurrentKeybind = "U",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind3",
+    Callback = function(Keybind) 
+        updateIndicators()
+    end,
+})
+
+local SpamKeybind3 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 3",
+    CurrentKeybind = "K",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind3",
+    Callback = function(Keybind)
+        AutoKeySpamActive3 = not AutoKeySpamActive3
+        updateIndicators()
+        if AutoKeySpamActive3 then
+            task.spawn(function()
+                while AutoKeySpamActive3 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.00000000000000000000000000000000000000000000000000000001)
+                end
+            end)
+        end
+    end,
+})
+
+
+
+local Keybind3 = PlayerTab:CreateKeybind({
+    Name = "KEYBIND TO SPAM 4",
+    CurrentKeybind = "L",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamKeybind4",
+    Callback = function(Keybind) 
+        updateIndicators()
+    end,
+})
+
+local SpamKeybind3 = PlayerTab:CreateKeybind({
+    Name = "Activate Keybind 4",
+    CurrentKeybind = "L",  
+    HoldToInteract = false,
+    Flag = "AutoKeySpamActivateKeybind4",
+    Callback = function(Keybind)
+        AutoKeySpamActive3 = not AutoKeySpamActive3
+        updateIndicators()
+        if AutoKeySpamActive3 then
+            task.spawn(function()
+                while AutoKeySpamActive3 do
+                    local currentKey = Rayfield.Flags["AutoKeySpamKeybind4"].CurrentKeybind
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                end
+            end)
+        end
+    end,
+})
+
+
+local PlayerTab = Window:CreateTab("Teleports")
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Church",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "1"
+       local targetPart = workspace.SpawnLocations:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+       end
+   end,
+})
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Fountain",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "2"
+       local targetPart = workspace.SpawnLocations:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+       end
+   end,
+})
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to City",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "3"
+       local targetPart = workspace.SpawnLocations:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+       end
+   end,
+})
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Bellatrix Lestrange",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "Bellatrix Lestrange"
+       local targetPart = workspace.SpawnLocations.NPCSpawnPoints:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+       end
+   end,
+})
+
+local Button = PlayerTab:CreateButton({
+   Name = "Teleport to Allison Argent",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local character = player.Character or player.CharacterAdded:Wait()
+       local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+       local targetPartName = "Allison Argent"
+       local targetPart = workspace.SpawnLocations.NPCSpawnPoints:FindFirstChild(targetPartName)
+       
+       if targetPart then
+           humanoidRootPart.CFrame = targetPart.CFrame
+       else
+       end
+   end,
+})
