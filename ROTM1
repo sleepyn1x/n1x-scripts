@@ -509,7 +509,7 @@ local Keybind = PlayerTab:CreateKeybind({
                             mouse1click()
                         end
                     end
-                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                    wait(0.000000000000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
@@ -542,7 +542,7 @@ local SpamKeybind1 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive1 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                    wait(0.0000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
@@ -572,7 +572,7 @@ local SpamKeybind2 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive2 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                    wait(0.000000000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
@@ -602,7 +602,7 @@ local SpamKeybind3 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive3 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.00000000000000000000000000000000000000000000000000000001)
+                    wait(0.0000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
@@ -634,7 +634,7 @@ local SpamKeybind3 = PlayerTab:CreateKeybind({
                 while AutoKeySpamActive3 do
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind4"].CurrentKeybind
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    wait(0.0000000000000000000000000000000000000000000000000000000000000001)
+                    wait(0.00000000000000000000000000000000000000000000000000000000000000001)
                 end
             end)
         end
