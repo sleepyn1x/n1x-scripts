@@ -491,9 +491,9 @@ Player.CharacterAdded:Connect(function()
     updateIndicators()
 end)
 
--- == СУПЕРБЫСТРЫЙ АВТОКЛИКЕР ==
+-- == БЫСТРЫЙ И БЕЗОПАСНЫЙ АВТОКЛИКЕР ==
 local Keybind = PlayerTab:CreateKeybind({
-    Name = "AutoClicker (Super Fast)",
+    Name = "AutoClicker (Fast + Safe)",
     CurrentKeybind = "Q",
     HoldToInteract = false,
     Flag = "AutoClickerKeybind",
@@ -507,21 +507,20 @@ local Keybind = PlayerTab:CreateKeybind({
                         local Mouse = Player:GetMouse()
                         local Target = Mouse.Target
                         if Target and not Target:IsDescendantOf(Player.PlayerGui) then
-                            -- Ставим несколько кликов сразу
                             mouse1click()
                             mouse1click()
                             mouse1click()
                             mouse1click()
                         end
                     end
-                    -- НЕТ ОЖИДАНИЯ!
+                    task.wait() -- минимальная задержка для безопасности
                 end
             end)
         end
     end,
 })
 
--- == СУПЕРБЫСТРЫЙ СПАМ КЕЙБИНДОВ ==
+-- == БЫСТРЫЙ И БЕЗОПАСНЫЙ СПАМ КЕЙБИНДОВ ==
 
 -- Первый кейбинд спам
 local Keybind1 = PlayerTab:CreateKeybind({
@@ -550,7 +549,7 @@ local SpamKeybind1 = PlayerTab:CreateKeybind({
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    -- Без ожидания!
+                    task.wait()
                 end
             end)
         end
@@ -584,6 +583,7 @@ local SpamKeybind2 = PlayerTab:CreateKeybind({
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    task.wait()
                 end
             end)
         end
@@ -617,6 +617,7 @@ local SpamKeybind3 = PlayerTab:CreateKeybind({
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    task.wait()
                 end
             end)
         end
@@ -650,6 +651,7 @@ local SpamKeybind4 = PlayerTab:CreateKeybind({
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    task.wait()
                 end
             end)
         end
