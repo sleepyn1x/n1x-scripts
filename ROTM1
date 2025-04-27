@@ -419,7 +419,7 @@ local Player = game.Players.LocalPlayer
 local AutoClickerActive = false
 local AutoKeySpamActive1, AutoKeySpamActive2, AutoKeySpamActive3, AutoKeySpamActive4 = false, false, false, false
 
--- Функция создания GUI (чтобы пересоздавать после смерти)
+-- GUI для индикаторов
 local function createIndicatorGui()
     if Player:FindFirstChild("PlayerGui") then
         if Player.PlayerGui:FindFirstChild("KeybindIndicators") then
@@ -485,16 +485,15 @@ end
 
 RunService.Heartbeat:Connect(updateIndicators)
 
--- Восстановление GUI после смерти
 Player.CharacterAdded:Connect(function()
     task.wait(1)
     IndicatorGui = createIndicatorGui()
     updateIndicators()
 end)
 
--- === АвтоКликер ===
+-- == СУПЕРБЫСТРЫЙ АВТОКЛИКЕР ==
 local Keybind = PlayerTab:CreateKeybind({
-    Name = "AutoClicker Keybind",
+    Name = "AutoClicker (Super Fast)",
     CurrentKeybind = "Q",
     HoldToInteract = false,
     Flag = "AutoClickerKeybind",
@@ -508,19 +507,23 @@ local Keybind = PlayerTab:CreateKeybind({
                         local Mouse = Player:GetMouse()
                         local Target = Mouse.Target
                         if Target and not Target:IsDescendantOf(Player.PlayerGui) then
+                            -- Ставим несколько кликов сразу
                             mouse1click()
-                            mouse1click() -- двойной клик для ускорения
+                            mouse1click()
+                            mouse1click()
+                            mouse1click()
                         end
                     end
-                    RunService.Heartbeat:Wait()
+                    -- НЕТ ОЖИДАНИЯ!
                 end
             end)
         end
     end,
 })
 
--- === Кейбинды для авто-нажатий ===
+-- == СУПЕРБЫСТРЫЙ СПАМ КЕЙБИНДОВ ==
 
+-- Первый кейбинд спам
 local Keybind1 = PlayerTab:CreateKeybind({
     Name = "KEY TO SPAM 1",
     CurrentKeybind = "T",  
@@ -545,13 +548,16 @@ local SpamKeybind1 = PlayerTab:CreateKeybind({
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind1"].CurrentKeybind
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    RunService.Heartbeat:Wait()
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    -- Без ожидания!
                 end
             end)
         end
     end,
 })
 
+-- Второй кейбинд спам
 local Keybind2 = PlayerTab:CreateKeybind({
     Name = "KEY TO SPAM 2",
     CurrentKeybind = "Y",  
@@ -576,13 +582,15 @@ local SpamKeybind2 = PlayerTab:CreateKeybind({
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind2"].CurrentKeybind
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    RunService.Heartbeat:Wait()
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                 end
             end)
         end
     end,
 })
 
+-- Третий кейбинд спам
 local Keybind3 = PlayerTab:CreateKeybind({
     Name = "KEY TO SPAM 3",
     CurrentKeybind = "U",  
@@ -607,13 +615,15 @@ local SpamKeybind3 = PlayerTab:CreateKeybind({
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind3"].CurrentKeybind
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    RunService.Heartbeat:Wait()
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                 end
             end)
         end
     end,
 })
 
+-- Четвертый кейбинд спам
 local Keybind4 = PlayerTab:CreateKeybind({
     Name = "KEY TO SPAM 4",
     CurrentKeybind = "L",  
@@ -638,7 +648,8 @@ local SpamKeybind4 = PlayerTab:CreateKeybind({
                     local currentKey = Rayfield.Flags["AutoKeySpamKeybind4"].CurrentKeybind
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
-                    RunService.Heartbeat:Wait()
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode[currentKey], false, game)
                 end
             end)
         end
