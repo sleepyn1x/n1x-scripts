@@ -71,18 +71,39 @@ local Toggle = PlayerTab:CreateToggle({
     end,
  })
  
-local WalkSpeedSlider = PlayerTab:CreateSlider({
-    Name = "WalkSpeed",
-    Range = {10, 100},
-    Increment = 1,
-    Suffix = "Speed",
-    CurrentValue = 10,
-    Flag = "Slider1",
-    Callback = function(Value)
-        local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
-        humanoid.WalkSpeed = Value
-    end,
-})
+ local currentWalkSpeed = 16
+
+ local WalkSpeedSlider = PlayerTab:CreateSlider({
+	 Name = "WalkSpeed",
+	 Range = {10, 100},
+	 Increment = 1,
+	 Suffix = "Speed",
+	 CurrentValue = currentWalkSpeed,
+	 Flag = "Slider1",
+	 Callback = function(Value)
+		 currentWalkSpeed = Value
+		 local humanoid = game.Players.LocalPlayer.Character:WaitForChild("Humanoid")
+		 humanoid.WalkSpeed = currentWalkSpeed
+	 end,
+ })
+ 
+ -- Следим за изменением скорости и восстанавливаем её при необходимости
+ task.spawn(function()
+	 while true do
+		 local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+		 if humanoid and humanoid.WalkSpeed ~= currentWalkSpeed then
+			 humanoid.WalkSpeed = currentWalkSpeed
+		 end
+		 wait(0.1)
+	 end
+ end)
+ 
+ -- Обновляем при возрождении
+ game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+	 local humanoid = char:WaitForChild("Humanoid")
+	 humanoid.WalkSpeed = currentWalkSpeed
+ end)
+ 
 
 local JumpPowerSlider = PlayerTab:CreateSlider({
     Name = "JumpPower",
@@ -177,84 +198,88 @@ local ToggleChests = PlayerTab:CreateToggle({
 
 
 local TogglePlayers = PlayerTab:CreateToggle({
-   Name = "Show Player",
-   CurrentValue = false,  
-   Flag = "PlayerLineToggle",
-   Callback = function(Value)
-      local playerLines = {}
-      local playerRunning = false
-
-
-      local function createLineAndNameToPlayer(targetPlayer)
-         local character = targetPlayer.Character
-         if not character then return end
-
-
-         local targetPart = character:WaitForChild("HumanoidRootPart")
-         local line = Instance.new("Beam")
-         line.Parent = game.Workspace
-         local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character.HumanoidRootPart)
-         local attachment2 = Instance.new("Attachment", targetPart)
-         attachment1.Position = Vector3.new(0, 1, 0)
-         attachment2.Position = Vector3.new(0, 1, 0)
-         line.Attachment0 = attachment1
-         line.Attachment1 = attachment2
-         line.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))  
-         line.Width0 = 0.2
-         line.Width1 = 0.2
-
-
-         local billboard = Instance.new("BillboardGui")
-         billboard.Parent = targetPart
-         billboard.Adornee = targetPart
-         billboard.Size = UDim2.new(0, 100, 0, 50)
-         billboard.StudsOffset = Vector3.new(0, 3, 0)
-         billboard.AlwaysOnTop = true  
-
-         local textLabel = Instance.new("TextLabel")
-         textLabel.Parent = billboard
-         textLabel.Size = UDim2.new(1, 0, 1, 0)
-         textLabel.Text = targetPlayer.Name
-         textLabel.TextColor3 = Color3.fromRGB(255, 165, 0) 
-         textLabel.TextStrokeTransparency = 0.5
-         textLabel.TextSize = 16
-         textLabel.BackgroundTransparency = 1  
-
-
-         table.insert(playerLines, {line, billboard})
-      end
-
-
-      task.spawn(function()
-         while true do
-            if Value then  
-               if not playerRunning then
-                  playerRunning = true
-                  for _, targetPlayer in pairs(game.Players:GetPlayers()) do
-                     if targetPlayer ~= game.Players.LocalPlayer then
-                        createLineAndNameToPlayer(targetPlayer)
-                     end
-                  end
-
-                  while Value do
-                     wait(1)  
-                  end
-                  playerRunning = false
-               end
-            else
-               
-               for _, data in ipairs(playerLines) do
-                  data[1]:Destroy()  
-                  data[2]:Destroy()  
-               end
-               playerLines = {}
-               break  
-            end
-            wait(1) 
-         end
-      end)
-   end,
-})
+	Name = "Show Player",
+	CurrentValue = false,
+	Flag = "PlayerLineToggle",
+	Callback = function(Value)
+	   local connections = {}
+	   local playerLines = {}
+ 
+	   local function cleanup()
+		  for _, conn in pairs(connections) do conn:Disconnect() end
+		  connections = {}
+		  for _, v in pairs(playerLines) do
+			 if v.line then v.line:Destroy() end
+			 if v.billboard then v.billboard:Destroy() end
+		  end
+		  playerLines = {}
+	   end
+ 
+	   local function createLineForPlayer(plr)
+		if plr == game.Players.LocalPlayer then return end
+		local function track()
+		   local char = plr.Character or plr.CharacterAdded:Wait()
+		   local root = char:WaitForChild("HumanoidRootPart")
+	 
+		   local attachment1 = Instance.new("Attachment", game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart"))
+		   local attachment2 = Instance.new("Attachment", root)
+		   local beam = Instance.new("Beam")
+		   beam.Attachment0 = attachment1
+		   beam.Attachment1 = attachment2
+		   beam.Color = ColorSequence.new(Color3.fromRGB(255, 165, 0))
+		   beam.Width0 = 0.2
+		   beam.Width1 = 0.2
+		   beam.Parent = workspace
+	 
+		   local billboard = Instance.new("BillboardGui", root)
+		   billboard.Size = UDim2.new(0, 100, 0, 50)
+		   billboard.AlwaysOnTop = true
+		   billboard.StudsOffset = Vector3.new(0, 3, 0)
+	 
+		   local label = Instance.new("TextLabel", billboard)
+		   label.Size = UDim2.new(1, 0, 1, 0)
+		   label.BackgroundTransparency = 1
+		   label.Text = plr.Name
+		   label.TextColor3 = Color3.fromRGB(255, 165, 0)
+		   label.Font = Enum.Font.SourceSans
+		   label.TextSize = 18
+		   label.TextStrokeTransparency = 1
+	 
+		   playerLines[plr] = {line = beam, billboard = billboard}
+		end
+	 
+		task.spawn(track)
+		local conn = plr.CharacterAdded:Connect(function()
+		   if playerLines[plr] then
+			  playerLines[plr].line:Destroy()
+			  playerLines[plr].billboard:Destroy()
+			  playerLines[plr] = nil
+		   end
+		   task.wait(1)
+		   track()
+		end)
+		table.insert(connections, conn)
+	 end
+	 
+	 
+	   if Value then
+		  for _, plr in pairs(game.Players:GetPlayers()) do
+			 createLineForPlayer(plr)
+		  end
+		  table.insert(connections, game.Players.PlayerAdded:Connect(createLineForPlayer))
+		  table.insert(connections, game.Players.PlayerRemoving:Connect(function(plr)
+			 if playerLines[plr] then
+				playerLines[plr].line:Destroy()
+				playerLines[plr].billboard:Destroy()
+				playerLines[plr] = nil
+			 end
+		  end))
+	   else
+		  cleanup()
+	   end
+	end,
+ })
+ 
 
  
 local PlayerTab = Window:CreateTab("Target")
